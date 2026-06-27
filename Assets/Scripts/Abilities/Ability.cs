@@ -1,6 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
 [CreateAssetMenu(fileName = "NewAbility", menuName = "Autobattler/Ability")]
 public class Ability : ScriptableObject
 {
@@ -28,7 +28,7 @@ public class Ability : ScriptableObject
     {
         if (customExecutor != null)
         {
-            customExecutor.ExecuteCustom(caster, context.allyTeam, context.enemyTeam, context);
+            customExecutor.ExecuteCustom(caster, context.allySide, context.enemySide, context);
             return;
         }
 

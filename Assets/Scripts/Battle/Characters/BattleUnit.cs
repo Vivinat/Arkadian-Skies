@@ -5,6 +5,7 @@ public class BattleUnit
     public CharacterData data;
     public BattlePosition position;
     public BattleSide side;
+    public int slotIndex; // index within its position array on the grid (e.g. Frontline[0])
 
     public float currentHP;
     public float currentMana;
@@ -13,11 +14,12 @@ public class BattleUnit
 
     public bool IsAlive => currentHP > 0f;
 
-    public BattleUnit(CharacterData data, BattlePosition position, BattleSide side)
+    public BattleUnit(CharacterData data, BattlePosition position, BattleSide side, int slotIndex = 0)
     {
         this.data = data;
         this.position = position;
         this.side = side;
+        this.slotIndex = slotIndex;
         currentHP = data.maxHP;
         currentMana = 0f;
         attackGauge = 0f;

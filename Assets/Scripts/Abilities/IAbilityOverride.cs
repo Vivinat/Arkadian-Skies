@@ -1,6 +1,4 @@
-using System.Collections.Generic;
-
 public interface IAbilityOverride
 {
-    void ExecuteCustom(BattleUnit caster, List<BattleUnit> allyTeam, List<BattleUnit> enemyTeam, BattleContext context);
+    void ExecuteCustom(BattleUnit caster, BattleGrid allySide, BattleGrid enemySide, BattleContext context);
 }

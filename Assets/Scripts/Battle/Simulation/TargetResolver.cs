@@ -6,6 +6,7 @@ public static class TargetResolver
     public static List<BattleUnit> Resolve(TargetFilterType filter, BattleUnit caster, BattleContext context, BattleUnit excludeUnit = null)
     {
         List<BattleUnit> result = new List<BattleUnit>();
+        List<BattleUnit> aliveEnemies = context.GetEnemyGridOf(caster).GetAllAlive();
 
         switch (filter)
         {
@@ -15,26 +16,26 @@ public static class TargetResolver
 
             case TargetFilterType.LowestHPEnemy:
                 {
-                    BattleUnit lowest = GetLowestHPAlive(context.GetEnemiesOf(caster));
+                    BattleUnit lowest = GetLowestHPAlive(aliveEnemies);
                     if (lowest != null) result.Add(lowest);
                     break;
                 }
 
             case TargetFilterType.HighestHPEnemy:
                 {
-                    BattleUnit highest = GetHighestHPAlive(context.GetEnemiesOf(caster));
+                    BattleUnit highest = GetHighestHPAlive(aliveEnemies);
                     if (highest != null) result.Add(highest);
                     break;
                 }
 
             case TargetFilterType.AllEnemies:
-                foreach (BattleUnit unit in context.GetEnemiesOf(caster))
-                    if (unit.IsAlive) result.Add(unit);
+                foreach (BattleUnit unit in aliveEnemies)
+                    result.Add(unit);
                 break;
 
             case TargetFilterType.AllOtherEnemies:
-                foreach (BattleUnit unit in context.GetEnemiesOf(caster))
-                    if (unit.IsAlive && unit != excludeUnit) result.Add(unit);
+                foreach (BattleUnit unit in aliveEnemies)
+                    if (unit != excludeUnit) result.Add(unit);
                 break;
         }
 
@@ -46,7 +47,6 @@ public static class TargetResolver
         BattleUnit lowest = null;
         foreach (BattleUnit unit in team)
         {
-            if (!unit.IsAlive) continue;
             if (lowest == null || unit.currentHP < lowest.currentHP)
                 lowest = unit;
         }
@@ -58,7 +58,6 @@ public static class TargetResolver
         BattleUnit highest = null;
         foreach (BattleUnit unit in team)
         {
-            if (!unit.IsAlive) continue;
             if (highest == null || unit.currentHP > highest.currentHP)
                 highest = unit;
         }

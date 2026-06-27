@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BattleSimulator : MonoBehaviour
@@ -7,11 +6,17 @@ public class BattleSimulator : MonoBehaviour
     public CharacterData allyCharacterData;
     public CharacterData enemyCharacterData;
 
+    [Header("Grid Sizes")]
+    public int allyFrontlineSlots = 2;
+    public int allyBacklineSlots = 2;
+    public int enemyFrontlineSlots = 4;
+    public int enemyBacklineSlots = 4;
+
     [Tooltip("Ticks per second")]
     public float tickRate = 10f;
 
-    List<BattleUnit> allyTeam = new List<BattleUnit>();
-    List<BattleUnit> enemyTeam = new List<BattleUnit>();
+    BattleGrid allySide;
+    BattleGrid enemySide;
     BattleEvents events;
     BattleContext context;
     bool battleOver = false;
@@ -19,32 +24,38 @@ public class BattleSimulator : MonoBehaviour
     void Start()
     {
         events = new BattleEvents();
-        SetupTeams();
-        context = new BattleContext(allyTeam, enemyTeam, events);
+        SetupGrids();
+        context = new BattleContext(allySide, enemySide, events);
 
-        RegisterOnKillAbilities(allyTeam);
-        RegisterOnKillAbilities(enemyTeam);
+        RegisterOnKillAbilities(allySide);
+        RegisterOnKillAbilities(enemySide);
 
         StartCoroutine(BattleLoop());
     }
 
-    void SetupTeams()
+    void SetupGrids()
     {
-        allyTeam.Add(new BattleUnit(allyCharacterData, BattlePosition.Frontline, BattleSide.Ally));
-        allyTeam.Add(new BattleUnit(allyCharacterData, BattlePosition.Frontline, BattleSide.Ally));
-        allyTeam.Add(new BattleUnit(allyCharacterData, BattlePosition.Backline, BattleSide.Ally));
-        allyTeam.Add(new BattleUnit(allyCharacterData, BattlePosition.Backline, BattleSide.Ally));
+        allySide = new BattleGrid(allyFrontlineSlots, allyBacklineSlots);
+        enemySide = new BattleGrid(enemyFrontlineSlots, enemyBacklineSlots);
 
-        enemyTeam.Add(new BattleUnit(enemyCharacterData, BattlePosition.Frontline, BattleSide.Enemy));
-        enemyTeam.Add(new BattleUnit(enemyCharacterData, BattlePosition.Frontline, BattleSide.Enemy));
-        enemyTeam.Add(new BattleUnit(enemyCharacterData, BattlePosition.Backline, BattleSide.Enemy));
-        enemyTeam.Add(new BattleUnit(enemyCharacterData, BattlePosition.Backline, BattleSide.Enemy));
+        FillSide(allySide, allyCharacterData, BattleSide.Ally);
+        FillSide(enemySide, enemyCharacterData, BattleSide.Enemy);
+    }
+
+    // fills every available slot on a grid with the same character, for quick testing setups
+    void FillSide(BattleGrid grid, CharacterData characterData, BattleSide side)
+    {
+        for (int i = 0; i < grid.frontline.Length; i++)
+            grid.PlaceUnit(new BattleUnit(characterData, BattlePosition.Frontline, side, i), BattlePosition.Frontline, i);
+
+        for (int i = 0; i < grid.backline.Length; i++)
+            grid.PlaceUnit(new BattleUnit(characterData, BattlePosition.Backline, side, i), BattlePosition.Backline, i);
     }
 
     // OnKill abilities don't get checked every tick - they subscribe to the OnKill event once at battle start
-    void RegisterOnKillAbilities(List<BattleUnit> team)
+    void RegisterOnKillAbilities(BattleGrid grid)
     {
-        foreach (BattleUnit unit in team)
+        foreach (BattleUnit unit in grid.GetAllUnits())
         {
             Ability ability = unit.GetAbility();
             if (ability == null || ability.triggerType != TriggerType.OnKill) continue;
@@ -70,18 +81,16 @@ public class BattleSimulator : MonoBehaviour
 
     void Tick(float deltaTime)
     {
-        ProcessTeam(allyTeam, deltaTime);
-        ProcessTeam(enemyTeam, deltaTime);
+        ProcessGrid(allySide, deltaTime);
+        ProcessGrid(enemySide, deltaTime);
 
         CheckBattleEnd();
     }
 
-    void ProcessTeam(List<BattleUnit> team, float deltaTime)
+    void ProcessGrid(BattleGrid grid, float deltaTime)
     {
-        foreach (BattleUnit unit in team)
+        foreach (BattleUnit unit in grid.GetAllAlive())
         {
-            if (!unit.IsAlive) continue;
-
             unit.AddMana(unit.data.manaPerSecond * deltaTime);
             unit.attackGauge += unit.data.attackSpeed * deltaTime;
 
@@ -137,34 +146,23 @@ public class BattleSimulator : MonoBehaviour
 
     BattleUnit GetAutoAttackTarget(BattleUnit attacker)
     {
-        List<BattleUnit> enemies = context.GetEnemiesOf(attacker);
+        BattleGrid enemyGrid = context.GetEnemyGridOf(attacker);
 
-        List<BattleUnit> frontline = GetAliveByPosition(enemies, BattlePosition.Frontline);
+        var frontline = enemyGrid.GetAliveByPosition(BattlePosition.Frontline);
         if (frontline.Count > 0) return frontline[0];
 
-        List<BattleUnit> backline = GetAliveByPosition(enemies, BattlePosition.Backline);
+        var backline = enemyGrid.GetAliveByPosition(BattlePosition.Backline);
         if (backline.Count > 0) return backline[0];
 
         return null;
-    }
-
-    List<BattleUnit> GetAliveByPosition(List<BattleUnit> team, BattlePosition position)
-    {
-        List<BattleUnit> result = new List<BattleUnit>();
-        foreach (BattleUnit unit in team)
-        {
-            if (unit.IsAlive && unit.position == position)
-                result.Add(unit);
-        }
-        return result;
     }
 
     void CheckBattleEnd()
     {
         if (battleOver) return;
 
-        bool allyAlive = TeamHasSurvivors(allyTeam);
-        bool enemyAlive = TeamHasSurvivors(enemyTeam);
+        bool allyAlive = allySide.HasSurvivors();
+        bool enemyAlive = enemySide.HasSurvivors();
 
         if (!allyAlive || !enemyAlive)
         {
@@ -176,14 +174,5 @@ public class BattleSimulator : MonoBehaviour
             else
                 Debug.Log("Battle ended: ENEMY TEAM WINS.");
         }
-    }
-
-    bool TeamHasSurvivors(List<BattleUnit> team)
-    {
-        foreach (BattleUnit unit in team)
-        {
-            if (unit.IsAlive) return true;
-        }
-        return false;
     }
 }

@@ -1,25 +1,23 @@
-using UnityEngine;
-using System.Collections.Generic;
 public class BattleContext
 {
-    public List<BattleUnit> allyTeam;
-    public List<BattleUnit> enemyTeam;
+    public BattleGrid allySide;
+    public BattleGrid enemySide;
     public BattleEvents events;
 
-    public BattleContext(List<BattleUnit> allyTeam, List<BattleUnit> enemyTeam, BattleEvents events)
+    public BattleContext(BattleGrid allySide, BattleGrid enemySide, BattleEvents events)
     {
-        this.allyTeam = allyTeam;
-        this.enemyTeam = enemyTeam;
+        this.allySide = allySide;
+        this.enemySide = enemySide;
         this.events = events;
     }
 
-    public List<BattleUnit> GetEnemiesOf(BattleUnit unit)
+    public BattleGrid GetGridOf(BattleUnit unit)
     {
-        return unit.side == BattleSide.Ally ? enemyTeam : allyTeam;
+        return unit.side == BattleSide.Ally ? allySide : enemySide;
     }
 
-    public List<BattleUnit> GetAlliesOf(BattleUnit unit)
+    public BattleGrid GetEnemyGridOf(BattleUnit unit)
     {
-        return unit.side == BattleSide.Ally ? allyTeam : enemyTeam;
+        return unit.side == BattleSide.Ally ? enemySide : allySide;
     }
 }
