@@ -243,8 +243,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b554534dc4a055c49a8053588d600ece, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  allyCharacterData: {fileID: 11400000, guid: d20f45482995e354089220a9d1b76373, type: 2}
-  enemyCharacterData: {fileID: 11400000, guid: 5bd941e2d6bff774aa35c8ed856fee66, type: 2}
+  allyComposition:
+  - character: {fileID: 11400000, guid: 5bd941e2d6bff774aa35c8ed856fee66, type: 2}
+    position: 0
+    slotIndex: 0
+  - character: {fileID: 11400000, guid: 5bd941e2d6bff774aa35c8ed856fee66, type: 2}
+    position: 0
+    slotIndex: 1
+  - character: {fileID: 11400000, guid: d20f45482995e354089220a9d1b76373, type: 2}
+    position: 1
+    slotIndex: 1
+  - character: {fileID: 11400000, guid: d20f45482995e354089220a9d1b76373, type: 2}
+    position: 1
+    slotIndex: 2
+  enemyComposition:
+  - character: {fileID: 11400000, guid: d20f45482995e354089220a9d1b76373, type: 2}
+    position: 0
+    slotIndex: 0
+  allyFrontlineSlots: 2
+  allyBacklineSlots: 2
+  enemyFrontlineSlots: 4
+  enemyBacklineSlots: 4
   tickRate: 10
 --- !u!4 &926979855
 Transform:

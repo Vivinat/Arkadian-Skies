@@ -1,10 +1,12 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BattleSimulator : MonoBehaviour
 {
-    public CharacterData allyCharacterData;
-    public CharacterData enemyCharacterData;
+    [Header("Composition (assign a character per slot)")]
+    public List<SlotAssignment> allyComposition = new List<SlotAssignment>();
+    public List<SlotAssignment> enemyComposition = new List<SlotAssignment>();
 
     [Header("Grid Sizes")]
     public int allyFrontlineSlots = 2;
@@ -38,18 +40,22 @@ public class BattleSimulator : MonoBehaviour
         allySide = new BattleGrid(allyFrontlineSlots, allyBacklineSlots);
         enemySide = new BattleGrid(enemyFrontlineSlots, enemyBacklineSlots);
 
-        FillSide(allySide, allyCharacterData, BattleSide.Ally);
-        FillSide(enemySide, enemyCharacterData, BattleSide.Enemy);
+        PlaceComposition(allySide, allyComposition, BattleSide.Ally);
+        PlaceComposition(enemySide, enemyComposition, BattleSide.Enemy);
     }
 
-    // fills every available slot on a grid with the same character, for quick testing setups
-    void FillSide(BattleGrid grid, CharacterData characterData, BattleSide side)
+    void PlaceComposition(BattleGrid grid, List<SlotAssignment> composition, BattleSide side)
     {
-        for (int i = 0; i < grid.frontline.Length; i++)
-            grid.PlaceUnit(new BattleUnit(characterData, BattlePosition.Frontline, side, i), BattlePosition.Frontline, i);
+        foreach (SlotAssignment assignment in composition)
+        {
+            if (assignment.character == null) continue;
 
-        for (int i = 0; i < grid.backline.Length; i++)
-            grid.PlaceUnit(new BattleUnit(characterData, BattlePosition.Backline, side, i), BattlePosition.Backline, i);
+            BattleUnit unit = new BattleUnit(assignment.character, assignment.position, side, assignment.slotIndex);
+            bool placed = grid.PlaceUnit(unit, assignment.position, assignment.slotIndex);
+
+            if (!placed)
+                Debug.LogWarning($"Could not place {assignment.character.characterName} ({side} {assignment.position}[{assignment.slotIndex}]) - slot out of range or already occupied.");
+        }
     }
 
     // OnKill abilities don't get checked every tick - they subscribe to the OnKill event once at battle start
