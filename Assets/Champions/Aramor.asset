@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Aramor
   m_EditorClassIdentifier: 
   characterName: Aramor
+  portrait: {fileID: 21300000, guid: 3179578fc31a86a44aabd1dc9dc9cf78, type: 3}
   maxHP: 850
   AD: 45
   AP: 30

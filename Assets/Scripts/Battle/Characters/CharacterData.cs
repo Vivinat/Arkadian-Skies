@@ -4,6 +4,7 @@ using UnityEngine;
 public class CharacterData : ScriptableObject
 {
     public string characterName;
+    public Sprite portrait;
 
     [Header("Base Stats")]
     public float maxHP;

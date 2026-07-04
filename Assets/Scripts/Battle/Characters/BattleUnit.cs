@@ -43,4 +43,26 @@ public class BattleUnit
     {
         return position == BattlePosition.Frontline ? data.frontlineAbility : data.backlineAbility;
     }
+
+    // Normalized 0-1 progress for the UI resource bar. Generalizes across trigger types since
+    // not every kit uses a 0-100 pool (e.g. Aramor's EveryNAutoAttacks doesn't use mana at all).
+    public float GetResourceProgress()
+    {
+        Ability ability = GetAbility();
+        if (ability == null) return 0f;
+
+        switch (ability.triggerType)
+        {
+            case TriggerType.Mana:
+                return Mathf.Clamp01(currentMana / 100f);
+
+            case TriggerType.EveryNAutoAttacks:
+                int interval = Mathf.Max(ability.autoAttackInterval, 1);
+                return (autoAttackCount % interval) / (float)interval;
+
+            case TriggerType.OnKill:
+            default:
+                return 0f; // reactive trigger, fires off an event rather than a continuous fill
+        }
+    }
 }

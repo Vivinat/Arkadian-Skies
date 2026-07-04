@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BattleSimulator : MonoBehaviour
 {
-    [Header("Composition (assign a character per slot)")]
+    [Header("Composition (used when BattleSetup is empty, e.g. testing this scene standalone)")]
     public List<SlotAssignment> allyComposition = new List<SlotAssignment>();
     public List<SlotAssignment> enemyComposition = new List<SlotAssignment>();
 
@@ -13,6 +13,10 @@ public class BattleSimulator : MonoBehaviour
     public int allyBacklineSlots = 2;
     public int enemyFrontlineSlots = 4;
     public int enemyBacklineSlots = 4;
+
+    [Header("UI & Pause")]
+    public BattleUIManager uiManager;
+    public BattlePauseController pauseController;
 
     [Tooltip("Ticks per second")]
     public float tickRate = 10f;
@@ -32,6 +36,8 @@ public class BattleSimulator : MonoBehaviour
         RegisterOnKillAbilities(allySide);
         RegisterOnKillAbilities(enemySide);
 
+        if (uiManager != null) uiManager.BindGrids(allySide, enemySide);
+
         StartCoroutine(BattleLoop());
     }
 
@@ -40,8 +46,13 @@ public class BattleSimulator : MonoBehaviour
         allySide = new BattleGrid(allyFrontlineSlots, allyBacklineSlots);
         enemySide = new BattleGrid(enemyFrontlineSlots, enemyBacklineSlots);
 
-        PlaceComposition(allySide, allyComposition, BattleSide.Ally);
-        PlaceComposition(enemySide, enemyComposition, BattleSide.Enemy);
+        // BattleSetup is filled by the previous scene (draft/map); falls back to the
+        // Inspector lists above so this scene still runs stand-alone for testing
+        List<SlotAssignment> allies = BattleSetup.allyComposition ?? allyComposition;
+        List<SlotAssignment> enemies = BattleSetup.enemyComposition ?? enemyComposition;
+
+        PlaceComposition(allySide, allies, BattleSide.Ally);
+        PlaceComposition(enemySide, enemies, BattleSide.Enemy);
     }
 
     void PlaceComposition(BattleGrid grid, List<SlotAssignment> composition, BattleSide side)
@@ -80,7 +91,12 @@ public class BattleSimulator : MonoBehaviour
         float tickInterval = 1f / tickRate;
         while (!battleOver)
         {
-            Tick(tickInterval);
+            // skipping Tick() here is the entire pause implementation - attackGauge, currentMana
+            // and autoAttackCount simply stop advancing, so every bar freezes in place automatically
+            if (pauseController == null || !pauseController.IsPaused)
+            {
+                Tick(tickInterval);
+            }
             yield return new WaitForSeconds(tickInterval);
         }
     }
