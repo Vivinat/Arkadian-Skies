@@ -5,14 +5,20 @@ public class BattleUnit
     public CharacterData data;
     public BattlePosition position;
     public BattleSide side;
-    public int slotIndex; // index within its position array on the grid (e.g. Frontline[0])
+    public int slotIndex;
 
     public float currentHP;
     public float currentMana;
-    public float attackGauge; // fills up based on attackSpeed, triggers auto-attack at 1.0
-    public int autoAttackCount; // total auto-attacks landed, used by EveryNAutoAttacks triggers
+    public float attackGauge;
+    public int autoAttackCount;
+
+    public float defMultiplier = 1f;
+    public float mdefMultiplier = 1f;
+    float debuffTimeRemaining = 0f;
 
     public bool IsAlive => currentHP > 0f;
+    public float EffectiveDEF => data.DEF * defMultiplier;
+    public float EffectiveMDEF => data.MDEF * mdefMultiplier;
 
     public BattleUnit(CharacterData data, BattlePosition position, BattleSide side, int slotIndex = 0)
     {
@@ -44,25 +50,28 @@ public class BattleUnit
         return position == BattlePosition.Frontline ? data.frontlineAbility : data.backlineAbility;
     }
 
-    // Normalized 0-1 progress for the UI resource bar. Generalizes across trigger types since
-    // not every kit uses a 0-100 pool (e.g. Aramor's EveryNAutoAttacks doesn't use mana at all).
+    public void ApplyDefMdefDebuff(float multiplier, float duration)
+    {
+        defMultiplier = multiplier;
+        mdefMultiplier = multiplier;
+        debuffTimeRemaining = duration;
+    }
+
+    public void TickDebuff(float deltaTime)
+    {
+        if (debuffTimeRemaining <= 0f) return;
+        debuffTimeRemaining -= deltaTime;
+        if (debuffTimeRemaining <= 0f)
+        {
+            defMultiplier = 1f;
+            mdefMultiplier = 1f;
+            debuffTimeRemaining = 0f;
+        }
+    }
+
+    // only Mana-triggered bars reach this - stack mode and reactive triggers are filtered out earlier in ResourceBarView
     public float GetResourceProgress()
     {
-        Ability ability = GetAbility();
-        if (ability == null) return 0f;
-
-        switch (ability.triggerType)
-        {
-            case TriggerType.Mana:
-                return Mathf.Clamp01(currentMana / 100f);
-
-            case TriggerType.EveryNAutoAttacks:
-                int interval = Mathf.Max(ability.autoAttackInterval, 1);
-                return (autoAttackCount % interval) / (float)interval;
-
-            case TriggerType.OnKill:
-            default:
-                return 0f; // reactive trigger, fires off an event rather than a continuous fill
-        }
+        return currentMana / 100f;
     }
 }

@@ -22,8 +22,6 @@ public class Ability : ScriptableObject
     [Header("Custom Override (bypasses targetFilter and effects entirely)")]
     public AbilityOverrideSO customExecutor;
 
-    // excludeFromTargets: the unit that just died, for AllOtherEnemies on-kill effects
-    // forcedTarget: used by SameAsAutoAttack, bypasses targetFilter resolution entirely
     public void Execute(BattleUnit caster, BattleContext context, BattleUnit excludeFromTargets = null, BattleUnit forcedTarget = null)
     {
         if (customExecutor != null)
@@ -45,9 +43,18 @@ public class Ability : ScriptableObject
 
         if (targets.Count == 0) return;
 
+        // lets reactive allies (e.g. Jacobo's "With me!") act before this ability's effects resolve
+        if (targets.Count == 1 && IsSingleTargetEnemyFilter(targetFilter))
+            context.events.RaiseBeforeSingleTargetAbility(caster, targets[0]);
+
         foreach (BaseEffect effect in effects)
         {
             effect.Execute(caster, targets, context);
         }
+    }
+
+    static bool IsSingleTargetEnemyFilter(TargetFilterType filter)
+    {
+        return filter == TargetFilterType.LowestHPEnemy || filter == TargetFilterType.HighestHPEnemy || filter == TargetFilterType.SameAsAutoAttack;
     }
 }

@@ -14,7 +14,9 @@ public enum TriggerType
 {
     Mana,
     OnKill,
-    EveryNAutoAttacks
+    EveryNAutoAttacks,
+    OnDamageTaken,             // reactive: fires when this unit is about to take damage (e.g. Jacobo Frontline)
+    OnAllySingleTargetAbility  // reactive: fires when an ally uses a single-target ability (e.g. Jacobo Backline)
 }
 
 public enum DamageType
@@ -30,6 +32,6 @@ public enum TargetFilterType
     HighestHPEnemy,
     AllEnemies,
     Self,
-    AllOtherEnemies, // used for on-kill effects: all enemies except the one that just died
-    SameAsAutoAttack // used by EveryNAutoAttacks abilities that hit whatever the normal auto-attack was targeting
+    AllOtherEnemies,
+    SameAsAutoAttack
 }

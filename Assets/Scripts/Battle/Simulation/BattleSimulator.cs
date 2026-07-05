@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BattleSimulator : MonoBehaviour
 {
-    [Header("Composition (used when BattleSetup is empty, e.g. testing this scene standalone)")]
+    [Header("Composition (assign a character per slot)")]
     public List<SlotAssignment> allyComposition = new List<SlotAssignment>();
     public List<SlotAssignment> enemyComposition = new List<SlotAssignment>();
 
@@ -14,12 +14,9 @@ public class BattleSimulator : MonoBehaviour
     public int enemyFrontlineSlots = 4;
     public int enemyBacklineSlots = 4;
 
-    [Header("UI & Pause")]
-    public BattleUIManager uiManager;
-    public BattlePauseController pauseController;
-
-    [Tooltip("Ticks per second")]
     public float tickRate = 10f;
+
+    public BattleUIManager uiManager;
 
     BattleGrid allySide;
     BattleGrid enemySide;
@@ -33,10 +30,12 @@ public class BattleSimulator : MonoBehaviour
         SetupGrids();
         context = new BattleContext(allySide, enemySide, events);
 
+        if (uiManager != null) uiManager.BindGrids(allySide, enemySide);
+
         RegisterOnKillAbilities(allySide);
         RegisterOnKillAbilities(enemySide);
-
-        if (uiManager != null) uiManager.BindGrids(allySide, enemySide);
+        RegisterReactiveAbilities(allySide);
+        RegisterReactiveAbilities(enemySide);
 
         StartCoroutine(BattleLoop());
     }
@@ -46,13 +45,8 @@ public class BattleSimulator : MonoBehaviour
         allySide = new BattleGrid(allyFrontlineSlots, allyBacklineSlots);
         enemySide = new BattleGrid(enemyFrontlineSlots, enemyBacklineSlots);
 
-        // BattleSetup is filled by the previous scene (draft/map); falls back to the
-        // Inspector lists above so this scene still runs stand-alone for testing
-        List<SlotAssignment> allies = BattleSetup.allyComposition ?? allyComposition;
-        List<SlotAssignment> enemies = BattleSetup.enemyComposition ?? enemyComposition;
-
-        PlaceComposition(allySide, allies, BattleSide.Ally);
-        PlaceComposition(enemySide, enemies, BattleSide.Enemy);
+        PlaceComposition(allySide, allyComposition, BattleSide.Ally);
+        PlaceComposition(enemySide, enemyComposition, BattleSide.Enemy);
     }
 
     void PlaceComposition(BattleGrid grid, List<SlotAssignment> composition, BattleSide side)
@@ -69,7 +63,6 @@ public class BattleSimulator : MonoBehaviour
         }
     }
 
-    // OnKill abilities don't get checked every tick - they subscribe to the OnKill event once at battle start
     void RegisterOnKillAbilities(BattleGrid grid)
     {
         foreach (BattleUnit unit in grid.GetAllUnits())
@@ -80,8 +73,29 @@ public class BattleSimulator : MonoBehaviour
             events.OnKill += (killer, victim) =>
             {
                 if (!unit.IsAlive) return;
-                if (killer != unit) return; // only fires for the unit that actually scored the kill
+                if (killer != unit) return;
                 ability.Execute(unit, context, victim);
+            };
+        }
+    }
+
+    void RegisterReactiveAbilities(BattleGrid grid)
+    {
+        foreach (BattleUnit unit in grid.GetAllUnits())
+        {
+            Ability ability = unit.GetAbility();
+            if (ability == null || ability.triggerType != TriggerType.OnAllySingleTargetAbility) continue;
+            if (!(ability.customExecutor is IAllyAbilityReactor reactor)) continue;
+
+            events.OnBeforeSingleTargetAbility += (caster, target) =>
+            {
+                if (!unit.IsAlive || caster == unit || caster.side != unit.side) return;
+
+                bool ready = unit.data.manaPerSecond <= 0f || unit.currentMana >= 100f;
+                if (!ready) return;
+
+                bool triggered = reactor.OnAllySingleTargetAbility(unit, caster, target, context);
+                if (triggered && unit.data.manaPerSecond > 0f) unit.currentMana = 0f;
             };
         }
     }
@@ -91,12 +105,7 @@ public class BattleSimulator : MonoBehaviour
         float tickInterval = 1f / tickRate;
         while (!battleOver)
         {
-            // skipping Tick() here is the entire pause implementation - attackGauge, currentMana
-            // and autoAttackCount simply stop advancing, so every bar freezes in place automatically
-            if (pauseController == null || !pauseController.IsPaused)
-            {
-                Tick(tickInterval);
-            }
+            Tick(tickInterval);
             yield return new WaitForSeconds(tickInterval);
         }
     }
@@ -113,6 +122,7 @@ public class BattleSimulator : MonoBehaviour
     {
         foreach (BattleUnit unit in grid.GetAllAlive())
         {
+            unit.TickDebuff(deltaTime);
             unit.AddMana(unit.data.manaPerSecond * deltaTime);
             unit.attackGauge += unit.data.attackSpeed * deltaTime;
 
@@ -123,7 +133,7 @@ public class BattleSimulator : MonoBehaviour
                 ability.Execute(unit, context);
                 events.RaiseAbilityUsed(unit);
                 unit.currentMana = 0f;
-                continue; // skip auto-attack this tick if a mana ability fired
+                continue;
             }
 
             if (unit.attackGauge >= 1f)
@@ -141,7 +151,6 @@ public class BattleSimulator : MonoBehaviour
 
         attacker.autoAttackCount++;
 
-        // EveryNAutoAttacks abilities replace the auto-attack itself on the Nth hit
         if (ability != null && ability.triggerType == TriggerType.EveryNAutoAttacks
             && attacker.autoAttackCount % ability.autoAttackInterval == 0)
         {
@@ -152,18 +161,8 @@ public class BattleSimulator : MonoBehaviour
         }
 
         float rawDamage = 0.25f * attacker.data.AD;
-        float damage = DamageCalculator.CalculateFinalDamage(rawDamage, target.data.DEF, DamageType.AD);
-        target.TakeDamage(damage);
-
-        Debug.Log($"{BattleLog.LabelOf(attacker)} auto-attacks {BattleLog.LabelOf(target)} for {damage:F1} damage. {BattleLog.LabelOf(target)} HP: {target.currentHP:F1}/{target.data.maxHP}");
-
+        CombatResolver.ApplyDamage(attacker, target, rawDamage, DamageType.AD, context);
         events.RaiseAutoAttack(attacker, target);
-
-        if (!target.IsAlive)
-        {
-            Debug.Log($"{BattleLog.LabelOf(target)} has died.");
-            events.RaiseKill(attacker, target);
-        }
     }
 
     BattleUnit GetAutoAttackTarget(BattleUnit attacker)

@@ -4,11 +4,8 @@ using UnityEngine.UI;
 
 public class ResourceBarView : MonoBehaviour
 {
-    [Header("Fill mode - mana-style bars")]
-    public Image fillImage; // Image Type = Filled, Fill Method = Horizontal
-
-    [Header("Stack mode - e.g. Aramor's auto-attack counter")]
-    public RectTransform stackContainer; // needs a Horizontal Layout Group so pips line up to the right
+    public Image fillImage;
+    public RectTransform stackContainer;
     public GameObject stackPipPrefab;
 
     BattleUnit unit;
@@ -21,9 +18,7 @@ public class ResourceBarView : MonoBehaviour
         unit = newUnit;
         ability = unit != null ? unit.GetAbility() : null;
 
-        // OnKill abilities are purely reactive (e.g. Aramor's backline kit) - no continuous
-        // progress exists to show, so the whole bar just hides for that slot/position
-        bool hasBar = unit != null && ability != null && ability.triggerType != TriggerType.OnKill;
+        bool hasBar = unit != null && ability != null && HasVisibleBar(ability, unit);
         gameObject.SetActive(hasBar);
         if (!hasBar) return;
 
@@ -33,6 +28,17 @@ public class ResourceBarView : MonoBehaviour
 
         if (isStackMode) RebuildPips(Mathf.Max(ability.autoAttackInterval - 1, 1));
         else fillImage.fillAmount = 0f;
+    }
+
+    static bool HasVisibleBar(Ability ability, BattleUnit unit)
+    {
+        if (ability.triggerType == TriggerType.OnKill) return false;
+        if (ability.triggerType == TriggerType.EveryNAutoAttacks) return true;
+
+        bool isReactive = ability.triggerType == TriggerType.OnDamageTaken || ability.triggerType == TriggerType.OnAllySingleTargetAbility;
+        if (isReactive) return unit.data.manaPerSecond > 0f; // e.g. Jacobo: bar shows readiness to react
+
+        return true;
     }
 
     void RebuildPips(int count)

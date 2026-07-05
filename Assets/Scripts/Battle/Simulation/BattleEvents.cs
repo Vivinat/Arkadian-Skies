@@ -2,14 +2,10 @@ using System;
 
 public class BattleEvents
 {
-    // fired right after an auto-attack lands, before death check
     public event Action<BattleUnit, BattleUnit> OnAutoAttack;
-
-    // fired right after a unit dies, passing (killer, victim)
     public event Action<BattleUnit, BattleUnit> OnKill;
-
-    // fired right after any ability (mana or otherwise) executes
     public event Action<BattleUnit> OnAbilityUsed;
+    public event Action<BattleUnit, BattleUnit> OnBeforeSingleTargetAbility;
 
     public void RaiseAutoAttack(BattleUnit attacker, BattleUnit target)
     {
@@ -24,5 +20,10 @@ public class BattleEvents
     public void RaiseAbilityUsed(BattleUnit caster)
     {
         OnAbilityUsed?.Invoke(caster);
+    }
+
+    public void RaiseBeforeSingleTargetAbility(BattleUnit caster, BattleUnit target)
+    {
+        OnBeforeSingleTargetAbility?.Invoke(caster, target);
     }
 }

@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 78e0ea955a0b6d34cacd299854ac5102, type: 3}
-  m_Name: Yuria_BladeOfLegend
+  m_Name: Yuria_Backline
   m_EditorClassIdentifier: 
-  abilityName: Blade of Legend
+  abilityName: Arc Of Light
   icon: {fileID: 0}
   triggerType: 0
   autoAttackInterval: 3
-  targetFilter: 0
+  targetFilter: 2
   effects:
-  - {fileID: 11400000, guid: d531e9d1a26209c43a46077aa0b55fc8, type: 2}
+  - {fileID: 11400000, guid: 98a84c6506b559a4aaf63fc9bfa7bf74, type: 2}
   customExecutor: {fileID: 0}

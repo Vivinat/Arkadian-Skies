@@ -3619,12 +3619,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   allyComposition:
-  - character: {fileID: 11400000, guid: 5bd941e2d6bff774aa35c8ed856fee66, type: 2}
-    position: 0
-    slotIndex: 0
   - character: {fileID: 11400000, guid: d20f45482995e354089220a9d1b76373, type: 2}
     position: 0
+    slotIndex: 0
+  - character: {fileID: 11400000, guid: 5bd941e2d6bff774aa35c8ed856fee66, type: 2}
+    position: 0
     slotIndex: 1
+  - character: {fileID: 11400000, guid: e0089925657013c44864a7a98c9ee44f, type: 2}
+    position: 1
+    slotIndex: 0
   enemyComposition:
   - character: {fileID: 11400000, guid: 5bd941e2d6bff774aa35c8ed856fee66, type: 2}
     position: 0
@@ -3633,9 +3636,8 @@ MonoBehaviour:
   allyBacklineSlots: 2
   enemyFrontlineSlots: 3
   enemyBacklineSlots: 3
-  uiManager: {fileID: 926979856}
-  pauseController: {fileID: 240571258}
   tickRate: 10
+  uiManager: {fileID: 926979856}
 --- !u!4 &926979855
 Transform:
   m_ObjectHideFlags: 0
