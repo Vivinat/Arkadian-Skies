@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e8a535696125e042ad8497f3261d632, type: 3}
-  m_Name: Aramor
+  m_Name: Nikkal
   m_EditorClassIdentifier: 
-  characterName: Aramor
-  portrait: {fileID: 21300000, guid: a66d964949ee6e0498594063f81ea9e1, type: 3}
-  maxHP: 850
-  AD: 45
-  AP: 30
-  attackSpeed: 0.65
+  characterName: Nikkal
+  portrait: {fileID: 21300000, guid: a3ea9bd20434c8d4baa5f80b954684ab, type: 3}
+  maxHP: 700
+  AD: 20
+  AP: 60
+  attackSpeed: 0.7
   critChance: 0
-  DEF: 50
-  MDEF: 45
-  manaPerSecond: 0
-  frontlineAbility: {fileID: 11400000, guid: 12c19ea853d7d8642b009a3793a22969, type: 2}
-  backlineAbility: {fileID: 11400000, guid: e9db1db8af073c04385330d88e17f81f, type: 2}
+  DEF: 40
+  MDEF: 60
+  manaPerSecond: 7
+  frontlineAbility: {fileID: 11400000, guid: 31b9ba6a2a8966f47a099343722cbb94, type: 2}
+  backlineAbility: {fileID: 11400000, guid: a10d018e061b6ca4995d9d1104511a2b, type: 2}

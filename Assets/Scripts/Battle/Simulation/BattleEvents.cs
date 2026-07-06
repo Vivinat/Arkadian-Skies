@@ -7,6 +7,12 @@ public class BattleEvents
     public event Action<BattleUnit> OnAbilityUsed;
     public event Action<BattleUnit, BattleUnit> OnBeforeSingleTargetAbility;
 
+    // fired for ANY unit (ally or enemy) that gets stunned; listeners filter by side themselves
+    public event Action<BattleUnit> OnUnitStunned;
+
+    // fired whenever a unit permanently changes grid position mid-battle (e.g. Nikkal's Elder's Repositioning)
+    public event Action OnPositionsChanged;
+
     public void RaiseAutoAttack(BattleUnit attacker, BattleUnit target)
     {
         OnAutoAttack?.Invoke(attacker, target);
@@ -25,5 +31,15 @@ public class BattleEvents
     public void RaiseBeforeSingleTargetAbility(BattleUnit caster, BattleUnit target)
     {
         OnBeforeSingleTargetAbility?.Invoke(caster, target);
+    }
+
+    public void RaiseUnitStunned(BattleUnit unit)
+    {
+        OnUnitStunned?.Invoke(unit);
+    }
+
+    public void RaisePositionsChanged()
+    {
+        OnPositionsChanged?.Invoke();
     }
 }

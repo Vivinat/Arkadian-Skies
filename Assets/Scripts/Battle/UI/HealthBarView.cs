@@ -11,7 +11,9 @@ public class HealthBarView : MonoBehaviour
     {
         unit = newUnit;
         gameObject.SetActive(unit != null);
-        if (unit != null) fillImage.fillAmount = 1f;
+
+        // seed from the real HP ratio (not a fixed 1f) so mid-battle rebinds (e.g. Nikkal's reposition) don't flicker
+        if (unit != null) fillImage.fillAmount = Mathf.Clamp01(unit.currentHP / unit.data.maxHP);
     }
 
     void Update()

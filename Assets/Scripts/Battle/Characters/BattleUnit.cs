@@ -16,6 +16,9 @@ public class BattleUnit
     public float mdefMultiplier = 1f;
     float debuffTimeRemaining = 0f;
 
+    public bool isStunned = false;
+    float stunTimeRemaining = 0f;
+
     public bool IsAlive => currentHP > 0f;
     public float EffectiveDEF => data.DEF * defMultiplier;
     public float EffectiveMDEF => data.MDEF * mdefMultiplier;
@@ -37,6 +40,12 @@ public class BattleUnit
         amount = Mathf.Max(amount, 0f);
         currentHP -= amount;
         if (currentHP < 0f) currentHP = 0f;
+    }
+
+    public void Heal(float amount)
+    {
+        amount = Mathf.Max(amount, 0f);
+        currentHP = Mathf.Min(currentHP + amount, data.maxHP);
     }
 
     public void AddMana(float amount)
@@ -67,6 +76,27 @@ public class BattleUnit
             mdefMultiplier = 1f;
             debuffTimeRemaining = 0f;
         }
+    }
+
+    // basic stun: blocks mana regen, attack gauge and actions in BattleSimulator while active.
+    // ClearStun() lets a reactive passive (e.g. Nikkal's Transmogryphy the Pain) cleanse it early.
+    public void SetStunned(float duration)
+    {
+        isStunned = true;
+        stunTimeRemaining = duration;
+    }
+
+    public void ClearStun()
+    {
+        isStunned = false;
+        stunTimeRemaining = 0f;
+    }
+
+    public void TickStun(float deltaTime)
+    {
+        if (!isStunned) return;
+        stunTimeRemaining -= deltaTime;
+        if (stunTimeRemaining <= 0f) ClearStun();
     }
 
     // only Mana-triggered bars reach this - stack mode and reactive triggers are filtered out earlier in ResourceBarView

@@ -27,7 +27,10 @@ public class ResourceBarView : MonoBehaviour
         stackContainer.gameObject.SetActive(isStackMode);
 
         if (isStackMode) RebuildPips(Mathf.Max(ability.autoAttackInterval - 1, 1));
-        else fillImage.fillAmount = 0f;
+
+        // seed the real progress immediately instead of waiting for the next Update() - matters for
+        // mid-battle rebinds (e.g. Nikkal's reposition), where the unit may already have mana/stacks banked
+        Refresh();
     }
 
     static bool HasVisibleBar(Ability ability, BattleUnit unit)
@@ -47,11 +50,7 @@ public class ResourceBarView : MonoBehaviour
         pips.Clear();
 
         for (int i = 0; i < count; i++)
-        {
-            GameObject pip = Instantiate(stackPipPrefab, stackContainer);
-            pip.SetActive(false);
-            pips.Add(pip);
-        }
+            pips.Add(Instantiate(stackPipPrefab, stackContainer));
     }
 
     void Update()
@@ -64,6 +63,11 @@ public class ResourceBarView : MonoBehaviour
             return;
         }
 
+        Refresh();
+    }
+
+    void Refresh()
+    {
         if (isStackMode)
         {
             int interval = Mathf.Max(ability.autoAttackInterval, 1);

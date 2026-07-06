@@ -25,6 +25,16 @@ public static class CombatResolver
         }
     }
 
+    // centralizes stun application so any future ability can inflict it and reactive passives (e.g. Nikkal) get notified
+    public static void ApplyStun(BattleUnit target, float duration, BattleContext context)
+    {
+        if (!target.IsAlive) return;
+
+        target.SetStunned(duration);
+        Debug.Log($"{BattleLog.LabelOf(target)} is stunned for {duration:F1}s.");
+        context.events.RaiseUnitStunned(target);
+    }
+
     static bool TryGetInterceptor(BattleUnit target, out IDamageInterceptor interceptor)
     {
         interceptor = null;

@@ -11,7 +11,9 @@ public class TurnBarView : MonoBehaviour
     {
         unit = newUnit;
         gameObject.SetActive(unit != null);
-        if (unit != null) fillImage.fillAmount = 0f;
+
+        // seed from the real attack gauge (not a fixed 0f) so mid-battle rebinds don't flicker
+        if (unit != null) fillImage.fillAmount = Mathf.Clamp01(unit.attackGauge);
     }
 
     void Update()

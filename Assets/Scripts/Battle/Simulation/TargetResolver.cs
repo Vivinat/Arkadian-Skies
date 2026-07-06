@@ -42,7 +42,8 @@ public static class TargetResolver
         return result;
     }
 
-    static BattleUnit GetLowestHPAlive(List<BattleUnit> team)
+    // public: also used directly by ally-targeting overrides (e.g. Nikkal healing her lowest-HP ally)
+    public static BattleUnit GetLowestHPAlive(List<BattleUnit> team)
     {
         BattleUnit lowest = null;
         foreach (BattleUnit unit in team)

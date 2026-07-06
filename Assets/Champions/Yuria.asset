@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Yuria
   m_EditorClassIdentifier: 
   characterName: Yuria
-  portrait: {fileID: 21300000, guid: e1e9525d276916f48acd771c2b0d2249, type: 3}
+  portrait: {fileID: 21300000, guid: 9fb92775822dfe64abceb9af940af25c, type: 3}
   maxHP: 650
   AD: 50
   AP: 50

@@ -36,6 +36,15 @@ public class BattleSimulator : MonoBehaviour
         RegisterOnKillAbilities(enemySide);
         RegisterReactiveAbilities(allySide);
         RegisterReactiveAbilities(enemySide);
+        RegisterStunReactiveAbilities(allySide);
+        RegisterStunReactiveAbilities(enemySide);
+
+        // some abilities (e.g. Nikkal's Elder's Repositioning) move units between slots mid-battle,
+        // so the UI needs to be told to rebind whenever that happens
+        events.OnPositionsChanged += () =>
+        {
+            if (uiManager != null) uiManager.BindGrids(allySide, enemySide);
+        };
 
         StartCoroutine(BattleLoop());
     }
@@ -100,6 +109,25 @@ public class BattleSimulator : MonoBehaviour
         }
     }
 
+    // fetches unit.GetAbility() fresh on every event instead of once at registration time, because a unit like
+    // Nikkal can change position (and therefore which ability/passive is active) mid-battle
+    void RegisterStunReactiveAbilities(BattleGrid grid)
+    {
+        foreach (BattleUnit unit in grid.GetAllUnits())
+        {
+            events.OnUnitStunned += (stunnedUnit) =>
+            {
+                if (!unit.IsAlive || stunnedUnit == unit || stunnedUnit.side != unit.side) return;
+
+                Ability ability = unit.GetAbility();
+                if (ability == null || !(ability.customExecutor is IAllyStunReactor reactor)) return;
+
+                bool triggered = reactor.OnAllyStunned(unit, stunnedUnit, context);
+                if (triggered) unit.currentMana = 0f;
+            };
+        }
+    }
+
     IEnumerator BattleLoop()
     {
         float tickInterval = 1f / tickRate;
@@ -123,6 +151,10 @@ public class BattleSimulator : MonoBehaviour
         foreach (BattleUnit unit in grid.GetAllAlive())
         {
             unit.TickDebuff(deltaTime);
+            unit.TickStun(deltaTime);
+
+            if (unit.isStunned) continue; // stunned units cannot gain mana, fill their attack gauge or act
+
             unit.AddMana(unit.data.manaPerSecond * deltaTime);
             unit.attackGauge += unit.data.attackSpeed * deltaTime;
 
