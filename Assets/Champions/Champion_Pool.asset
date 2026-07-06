@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a51a0a411b4a10f45bb1028714e62c96, type: 3}
+  m_Name: Champion_Pool
+  m_EditorClassIdentifier: 
+  availableChampions:
+  - {fileID: 11400000, guid: d20f45482995e354089220a9d1b76373, type: 2}
+  - {fileID: 11400000, guid: e0089925657013c44864a7a98c9ee44f, type: 2}
+  - {fileID: 11400000, guid: 54ee93241c640064596f1a19eca117e5, type: 2}
+  - {fileID: 11400000, guid: 5bd941e2d6bff774aa35c8ed856fee66, type: 2}

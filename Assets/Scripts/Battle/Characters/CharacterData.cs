@@ -6,6 +6,9 @@ public class CharacterData : ScriptableObject
     public string characterName;
     public Sprite portrait;
 
+    [Header("Roulette")]
+    public ChampionRarity rarity;
+
     [Header("Base Stats")]
     public float maxHP;
     public float AD;
