@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: Aramor_Frontline
   m_EditorClassIdentifier: 
   abilityName: Killer of Hubris
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 1876020e71eaa48468a9faa8c969f6ea, type: 3}
+  description: "Passive: Aramor\u2019s third auto-attack does not use AD. Instead,
+    it will always deal damage equal to the enemy\u2019s 3% Max Health to a single
+    enemy enemy."
   triggerType: 2
   autoAttackInterval: 3
   targetFilter: 5

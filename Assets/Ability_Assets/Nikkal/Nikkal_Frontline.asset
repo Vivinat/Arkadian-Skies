@@ -14,6 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   abilityName: Elder's Repositioning
   icon: {fileID: 0}
+  description: Permannently swaps her position with the character in the backline
+    immediately behind her. If there is no one on the slot, takes for her instead.
+    Becomes backline, and changes her ability to Transmogryphy the Pain.
   triggerType: 0
   autoAttackInterval: 3
   targetFilter: 0

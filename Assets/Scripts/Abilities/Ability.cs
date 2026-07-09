@@ -7,6 +7,9 @@ public class Ability : ScriptableObject
     public string abilityName;
     public Sprite icon;
 
+    [TextArea(2, 5)]
+    public string description; // shown by AbilityTooltip when hovering the icon/name in the Character Info Panel
+
     [Header("Trigger")]
     public TriggerType triggerType = TriggerType.Mana;
 

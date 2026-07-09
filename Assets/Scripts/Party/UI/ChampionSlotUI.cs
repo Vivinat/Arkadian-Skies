@@ -11,7 +11,7 @@ public enum SlotHighlight
 
 // One visual slot - either a bench slot or a party slot. Only knows its own ChampionSlotRef and
 // forwards every drag/hover event to the controller, which owns all the actual game-state logic.
-public class ChampionSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IPointerEnterHandler, IPointerExitHandler
+public class ChampionSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IPointerEnterHandler, IPointerExitHandler, IChampionProvider
 {
     public Image portraitImage;
     public Image highlightImage; // optional: a soft glow/outline sprite, shown while a drag is in progress
@@ -88,4 +88,6 @@ public class ChampionSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     public void OnPointerEnter(PointerEventData eventData) => controller.NotifyHover(this, true);
 
     public void OnPointerExit(PointerEventData eventData) => controller.NotifyHover(this, false);
+
+    public CharacterData GetInspectedChampion() => Champion;
 }

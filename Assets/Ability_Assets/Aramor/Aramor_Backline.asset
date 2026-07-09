@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Aramor_Backline
   m_EditorClassIdentifier: 
   abilityName: As The Mighty All Fall
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 5bbc5e9fa473c924baedd52827a09594, type: 3}
+  description: 'Passive: When Aramor kills an enemy, deals 5% their max health as
+    true damage to all other enemies.'
   triggerType: 1
   autoAttackInterval: 3
   targetFilter: 4

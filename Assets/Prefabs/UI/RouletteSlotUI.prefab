@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 398965060177320221}
   - component: {fileID: 5792672467964414493}
   - component: {fileID: -3749907896387652481}
+  - component: {fileID: 1545844924893006223}
   m_Layer: 5
   m_Name: RouletteSlotUI
   m_TagString: Untagged
@@ -37,7 +38,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 124.6259, y: 110.3956}
+  m_SizeDelta: {x: 70, y: 70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8353129396766446248
 CanvasRenderer:
@@ -135,3 +136,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   portraitImage: {fileID: 398965060177320221}
   button: {fileID: 5792672467964414493}
+--- !u!114 &1545844924893006223
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196618538039387943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d2b34f7cc61525498598a43e2fa9447, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -14,6 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   abilityName: With Me!
   icon: {fileID: 0}
+  description: "Passive: Jacobo will hold this ability. He will only use it when
+    another ally is using their single-target ability against an enemy that has more
+    than 50% HP.\r\nDeals 130% AD damage to the same target of the ally, reduces
+    their DEF and MDEF by 40% for 2 seconds. The ally\u2019s ability goes after this
+    debuff.\r"
   triggerType: 4
   autoAttackInterval: 3
   targetFilter: 0

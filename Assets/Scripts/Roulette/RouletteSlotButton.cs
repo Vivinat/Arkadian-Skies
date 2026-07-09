@@ -2,10 +2,12 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Goes on the slot prefab itself: a Button whose own Image IS the portrait (no child text).
-public class RouletteSlotButton : MonoBehaviour
+public class RouletteSlotButton : MonoBehaviour, IChampionProvider
 {
     public Image portraitImage;
     public Button button;
+
+    public CharacterData Champion { get; private set; }
 
     void Reset()
     {
@@ -13,15 +15,18 @@ public class RouletteSlotButton : MonoBehaviour
         button = GetComponent<Button>();
     }
 
-    public void SetChampion(Sprite portrait)
+    public void SetChampion(CharacterData champion)
     {
-        portraitImage.sprite = portrait;
-        portraitImage.enabled = portrait != null;
-        button.interactable = portrait != null;
+        Champion = champion;
+        portraitImage.sprite = champion != null ? champion.portrait : null;
+        portraitImage.enabled = champion != null;
+        button.interactable = champion != null;
     }
 
     public void SetClaimed(bool claimed)
     {
         button.interactable = !claimed;
     }
+
+    public CharacterData GetInspectedChampion() => Champion;
 }

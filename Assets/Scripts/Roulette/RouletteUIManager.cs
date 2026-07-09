@@ -95,7 +95,7 @@ public class RouletteUIManager : MonoBehaviour
         {
             if (i < results.Count)
             {
-                slots[i].SetChampion(results[i].champion.portrait);
+                slots[i].SetChampion(results[i].champion);
                 slots[i].SetClaimed(results[i].claimed);
             }
             else

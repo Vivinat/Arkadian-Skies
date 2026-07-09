@@ -14,6 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   abilityName: Arc Of Light
   icon: {fileID: 0}
+  description: 'Passive: Yuria cannot equip items. Her base stats greatly scales
+    with level ups.
+
+    Attacks all enemies, with 100% AD damage.'
   triggerType: 0
   autoAttackInterval: 3
   targetFilter: 2
