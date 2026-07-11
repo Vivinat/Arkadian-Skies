@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Nikkal_Frontline
   m_EditorClassIdentifier: 
   abilityName: Elder's Repositioning
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 459aff7f775f48f46a134bbd1eb82924, type: 3}
   description: Permannently swaps her position with the character in the backline
     immediately behind her. If there is no one on the slot, takes for her instead.
     Becomes backline, and changes her ability to Transmogryphy the Pain.

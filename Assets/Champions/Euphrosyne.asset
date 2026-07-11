@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e8a535696125e042ad8497f3261d632, type: 3}
+  m_Name: Euphrosyne
+  m_EditorClassIdentifier: 
+  characterName: 
+  portrait: {fileID: 0}
+  rarity: 0
+  maxHP: 0
+  AD: 0
+  AP: 0
+  attackSpeed: 0
+  critChance: 0
+  DEF: 0
+  MDEF: 0
+  manaPerSecond: 0
+  frontlineAbility: {fileID: 0}
+  backlineAbility: {fileID: 0}

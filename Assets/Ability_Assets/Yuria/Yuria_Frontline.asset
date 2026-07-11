@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Yuria_Frontline
   m_EditorClassIdentifier: 
   abilityName: Blade of Legend
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 39a5de4f85c3ea246a20ee2fb1059b90, type: 3}
   description: "Passive: Yuria cannot equip items. Her base stats greatly scales
     with level ups.\r\nAttacks the enemy with the lowest HP, dealing 25% dano AD
     + 60% AP adicional AP.\r"

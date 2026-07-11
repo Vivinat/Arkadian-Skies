@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Nikkal_Backline
   m_EditorClassIdentifier: 
   abilityName: Transmogryphy the Pain
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: dab3c1d36cf1aea468e93dba7499ca4e, type: 3}
   description: "Passive: If mana is in between 40 or above, Immediately use all her
     mana when an ally is stunned: remove the stun.\r\nHeals ally with lowest HP in
     10% her AP.\r"

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Jacobo_Frontline
   m_EditorClassIdentifier: 
   abilityName: Cignakalt - Devour & Burst
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 45cc7790e19a8aa4490fa85c61f6fe4b, type: 3}
   description: "Passive: Jacobo will hold this ability. He will only use it when
     a single target attack or AoE is made against him.\r\nIgnore 75% of damage that
     would go to him, convert that 75% damage to AD and immediately fire back at the
