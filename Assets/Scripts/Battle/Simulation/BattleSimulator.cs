@@ -152,6 +152,7 @@ public class BattleSimulator : MonoBehaviour
         {
             unit.TickDebuff(deltaTime);
             unit.TickStun(deltaTime);
+            unit.TickHealBlock(deltaTime);
 
             if (unit.isStunned) continue; // stunned units cannot gain mana, fill their attack gauge or act
 
@@ -192,7 +193,7 @@ public class BattleSimulator : MonoBehaviour
             return;
         }
 
-        float rawDamage = 0.25f * attacker.data.AD;
+        float rawDamage = 0.25f * attacker.EffectiveAD;
         CombatResolver.ApplyDamage(attacker, target, rawDamage, DamageType.AD, context);
         events.RaiseAutoAttack(attacker, target);
     }

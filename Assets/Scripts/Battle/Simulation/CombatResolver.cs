@@ -35,6 +35,15 @@ public static class CombatResolver
         context.events.RaiseUnitStunned(target);
     }
 
+    // Severe Wounds / heal block, for a specific duration.
+    public static void ApplyHealBlock(BattleUnit target, float duration, BattleContext context)
+    {
+        if (!target.IsAlive) return;
+
+        target.ApplyHealBlock(duration);
+        Debug.Log($"{BattleLog.LabelOf(target)} suffers Severe Wounds and cannot be healed for {duration:F1}s.");
+    }
+
     static bool TryGetInterceptor(BattleUnit target, out IDamageInterceptor interceptor)
     {
         interceptor = null;

@@ -24,7 +24,7 @@ public class DamageEffect : BaseEffect
             if (percentOfTargetMaxHP > 0f)
                 rawDamage = target.data.maxHP * percentOfTargetMaxHP;
             else
-                rawDamage = (caster.data.AD * percentOfCasterAD) + (caster.data.AP * percentOfCasterAP) + flatDamage;
+                rawDamage = (caster.EffectiveAD * percentOfCasterAD) + (caster.EffectiveAP * percentOfCasterAP) + flatDamage;
 
             CombatResolver.ApplyDamage(caster, target, rawDamage, damageType, context);
         }

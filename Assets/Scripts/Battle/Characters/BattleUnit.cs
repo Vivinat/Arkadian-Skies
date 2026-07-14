@@ -16,12 +16,23 @@ public class BattleUnit
     public float mdefMultiplier = 1f;
     float debuffTimeRemaining = 0f;
 
+    // Permanent per-battle stat bonuses (e.g. Euphrosyne's AP gain on kill). Additive on top of CharacterData,
+    // never written back to the shared asset itself.
+    public float bonusAD = 0f;
+    public float bonusAP = 0f;
+
     public bool isStunned = false;
     float stunTimeRemaining = 0f;
+
+    // Severe Wounds / heal block: always a timed duration, same shape as the DEF/MDEF debuff below.
+    public bool isHealBlocked = false;
+    float healBlockTimeRemaining = 0f;
 
     public bool IsAlive => currentHP > 0f;
     public float EffectiveDEF => data.DEF * defMultiplier;
     public float EffectiveMDEF => data.MDEF * mdefMultiplier;
+    public float EffectiveAD => data.AD + bonusAD;
+    public float EffectiveAP => data.AP + bonusAP;
 
     public BattleUnit(CharacterData data, BattlePosition position, BattleSide side, int slotIndex = 0)
     {
@@ -44,6 +55,8 @@ public class BattleUnit
 
     public void Heal(float amount)
     {
+        if (isHealBlocked) return;
+
         amount = Mathf.Max(amount, 0f);
         currentHP = Mathf.Min(currentHP + amount, data.maxHP);
     }
@@ -97,6 +110,24 @@ public class BattleUnit
         if (!isStunned) return;
         stunTimeRemaining -= deltaTime;
         if (stunTimeRemaining <= 0f) ClearStun();
+    }
+
+    // Reapplying heal block only extends the remaining duration, never shortens it.
+    public void ApplyHealBlock(float duration)
+    {
+        isHealBlocked = true;
+        healBlockTimeRemaining = Mathf.Max(healBlockTimeRemaining, duration);
+    }
+
+    public void TickHealBlock(float deltaTime)
+    {
+        if (!isHealBlocked) return;
+        healBlockTimeRemaining -= deltaTime;
+        if (healBlockTimeRemaining <= 0f)
+        {
+            isHealBlocked = false;
+            healBlockTimeRemaining = 0f;
+        }
     }
 
     // only Mana-triggered bars reach this - stack mode and reactive triggers are filtered out earlier in ResourceBarView

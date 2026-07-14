@@ -12,16 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e8a535696125e042ad8497f3261d632, type: 3}
   m_Name: Euphrosyne
   m_EditorClassIdentifier: 
-  characterName: 
-  portrait: {fileID: 0}
-  rarity: 0
-  maxHP: 0
-  AD: 0
-  AP: 0
-  attackSpeed: 0
+  characterName: Euphrosyne
+  portrait: {fileID: 21300000, guid: d9cd7950c1d735d49a783e716d6ac0d3, type: 3}
+  rarity: 1
+  maxHP: 700
+  AD: 15
+  AP: 80
+  attackSpeed: 0.6
   critChance: 0
-  DEF: 0
-  MDEF: 0
-  manaPerSecond: 0
-  frontlineAbility: {fileID: 0}
-  backlineAbility: {fileID: 0}
+  DEF: 15
+  MDEF: 20
+  manaPerSecond: 6
+  frontlineAbility: {fileID: 11400000, guid: f680881066e54d8488268cfb615cdb99, type: 2}
+  backlineAbility: {fileID: 11400000, guid: e58684655a9bbff4abe033e97321bc76, type: 2}
