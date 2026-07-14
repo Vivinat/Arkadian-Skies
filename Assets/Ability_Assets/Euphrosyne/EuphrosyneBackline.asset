@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: EuphrosyneBackline
   m_EditorClassIdentifier: 
   abilityName: Zero-Form Doomsday
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 72aa974084b117a44bc8fa83140ed959, type: 3}
   description: 
   triggerType: 0
   autoAttackInterval: 3

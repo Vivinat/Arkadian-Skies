@@ -8,7 +8,7 @@ public class CharacterData : ScriptableObject
 
     [Header("Roulette")]
     public ChampionRarity rarity;
-    
+
     [Header("Leveling")]
     public CharacterClass characterClass;
 
@@ -25,4 +25,9 @@ public class CharacterData : ScriptableObject
     [Header("Abilities")]
     public Ability frontlineAbility;
     public Ability backlineAbility;
+
+    [Header("Dialogue")]
+    [TextArea(2, 4)] public string selectQuote;  // said once, the first time this champion is acquired
+    [TextArea(2, 4)] public string levelUpQuote; // said every time this champion levels up
+    [TextArea(2, 4)] public string victoryQuote; // said by whoever lands the killing blow that wins a battle
 }

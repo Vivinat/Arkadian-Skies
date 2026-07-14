@@ -15,6 +15,7 @@ MonoBehaviour:
   characterName: Jacobo
   portrait: {fileID: 21300000, guid: 21fee27eeac677143b47cbbb99ab0590, type: 3}
   rarity: 1
+  characterClass: 2
   maxHP: 700
   AD: 55
   AP: 25
@@ -25,3 +26,6 @@ MonoBehaviour:
   manaPerSecond: 6
   frontlineAbility: {fileID: 11400000, guid: 2c421740ad35dd34aa96291e13360537, type: 2}
   backlineAbility: {fileID: 11400000, guid: 434d8a98fb3fbda44a9e397a5d5e6b17, type: 2}
+  selectQuote: We shall be free!
+  levelUpQuote: "I\u2019ll blast my way through them all!"
+  victoryQuote: Down with the tyrant! Follow me!

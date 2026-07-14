@@ -17,12 +17,16 @@ public class BattleSimulator : MonoBehaviour
     public float tickRate = 10f;
 
     public BattleUIManager uiManager;
+    public DialogueUIController dialogueUI;
 
     BattleGrid allySide;
     BattleGrid enemySide;
     BattleEvents events;
     BattleContext context;
     bool battleOver = false;
+
+    // Whoever holds this when the enemy team wipes speaks the Victory Quote.
+    BattleUnit lastAllyKiller;
 
     void Start()
     {
@@ -38,6 +42,11 @@ public class BattleSimulator : MonoBehaviour
         RegisterReactiveAbilities(enemySide);
         RegisterStunReactiveAbilities(allySide);
         RegisterStunReactiveAbilities(enemySide);
+
+        events.OnKill += (killer, victim) =>
+        {
+            if (killer.side == BattleSide.Ally) lastAllyKiller = killer;
+        };
 
         // some abilities (e.g. Nikkal's Elder's Repositioning) move units between slots mid-battle,
         // so the UI needs to be told to rebind whenever that happens
@@ -221,12 +230,21 @@ public class BattleSimulator : MonoBehaviour
         if (!allyAlive || !enemyAlive)
         {
             battleOver = true;
+
             if (!allyAlive && !enemyAlive)
+            {
                 Debug.Log("Battle ended in a draw - both teams wiped.");
+            }
             else if (!enemyAlive)
+            {
                 Debug.Log("Battle ended: ALLY TEAM WINS.");
+                if (dialogueUI != null && lastAllyKiller != null)
+                    dialogueUI.Show(lastAllyKiller.data, ChampionQuoteType.Victory);
+            }
             else
+            {
                 Debug.Log("Battle ended: ENEMY TEAM WINS.");
+            }
         }
     }
 }

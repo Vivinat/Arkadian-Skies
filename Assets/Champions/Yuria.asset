@@ -15,6 +15,7 @@ MonoBehaviour:
   characterName: Yuria
   portrait: {fileID: 21300000, guid: 9fb92775822dfe64abceb9af940af25c, type: 3}
   rarity: 1
+  characterClass: 5
   maxHP: 650
   AD: 50
   AP: 50
@@ -25,3 +26,6 @@ MonoBehaviour:
   manaPerSecond: 5
   frontlineAbility: {fileID: 11400000, guid: 1ac05bad6c002ea4d8b0232e64e150f2, type: 2}
   backlineAbility: {fileID: 11400000, guid: 9c0ffcf6280b0e0448290e3a00808c80, type: 2}
+  selectQuote: I will never be defeated!
+  levelUpQuote: "I\u2019m coming for your head, father!"
+  victoryQuote: Lighter and sharper!

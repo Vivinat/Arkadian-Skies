@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: Nikkal
   portrait: {fileID: 21300000, guid: a3ea9bd20434c8d4baa5f80b954684ab, type: 3}
+  rarity: 0
+  characterClass: 4
   maxHP: 700
   AD: 20
   AP: 60
@@ -24,3 +26,6 @@ MonoBehaviour:
   manaPerSecond: 7
   frontlineAbility: {fileID: 11400000, guid: 31b9ba6a2a8966f47a099343722cbb94, type: 2}
   backlineAbility: {fileID: 11400000, guid: a10d018e061b6ca4995d9d1104511a2b, type: 2}
+  selectQuote: Respect your elders!
+  levelUpQuote: How amusing. A return to my old self, perhaps?
+  victoryQuote: You should have seen me in my younger years!
