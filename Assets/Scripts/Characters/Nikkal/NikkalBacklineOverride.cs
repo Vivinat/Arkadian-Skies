@@ -13,7 +13,7 @@ public class NikkalBacklineOverride : AbilityOverrideSO, IAllyStunReactor
         BattleUnit lowest = TargetResolver.GetLowestHPAlive(ownGrid.GetAllAlive());
         if (lowest == null) return;
 
-        float healAmount = caster.data.AP * healPercentOfAP;
+        float healAmount = caster.EffectiveAP * healPercentOfAP;
         lowest.Heal(healAmount);
 
         Debug.Log($"{BattleLog.LabelOf(caster)} uses Transmogryphy the Pain, healing {BattleLog.LabelOf(lowest)} for {healAmount:F1}.");

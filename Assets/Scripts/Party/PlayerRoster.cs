@@ -55,7 +55,9 @@ public class PlayerRoster : MonoBehaviour
 
     public bool Owns(CharacterData champion) => champion != null && ownedChampions.Contains(champion);
 
-    // Places a newly (or re-)acquired champion into the first free bench slot.
+    // Places a newly (or re-)acquired champion into the first free bench slot. This first copy
+    // counts as memento #1 - REGRAS.docx counts the acquired copy itself, so 3 total copies
+    // (this one + 2 more via AddMemento) is what triggers the level up to 2, not 4.
     public bool AddToBench(CharacterData champion)
     {
         if (champion == null || IsOnBench(champion)) return false;
@@ -66,6 +68,7 @@ public class PlayerRoster : MonoBehaviour
         ownedChampions.Add(champion);
         Bench[slot] = champion;
         if (!levels.ContainsKey(champion)) levels[champion] = 1;
+        if (!mementoCounts.ContainsKey(champion)) mementoCounts[champion] = 1;
 
         OnBenchChanged?.Invoke();
         return true;

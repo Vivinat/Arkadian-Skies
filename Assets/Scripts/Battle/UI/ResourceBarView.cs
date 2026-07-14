@@ -39,7 +39,7 @@ public class ResourceBarView : MonoBehaviour
         if (ability.triggerType == TriggerType.EveryNAutoAttacks) return true;
 
         bool isReactive = ability.triggerType == TriggerType.OnDamageTaken || ability.triggerType == TriggerType.OnAllySingleTargetAbility;
-        if (isReactive) return unit.data.manaPerSecond > 0f; // e.g. Jacobo: bar shows readiness to react
+        if (isReactive) return unit.EffectiveManaPerSecond > 0f; // e.g. Jacobo: bar shows readiness to react
 
         return true;
     }

@@ -17,6 +17,7 @@ public class CharacterInfoPanelController : MonoBehaviour
     public Image portraitImage;
     public TMP_Text nameLabel;
     public TMP_Text levelLabel;
+    public TMP_Text mementoLabel; // optional: progress towards the next level-up, e.g. "2/3"
 
     [Header("Attributes")]
     public TMP_Text hpLabel;
@@ -88,19 +89,23 @@ public class CharacterInfoPanelController : MonoBehaviour
     void PopulateContent(CharacterData champion)
     {
         int level = roster != null ? Mathf.Max(roster.GetLevel(champion), 1) : 1;
+        CharacterStats stats = LevelUpCalculator.GetStatsAtLevel(champion, level);
 
         portraitImage.sprite = champion.portrait;
         nameLabel.text = champion.characterName;
         levelLabel.text = $"Lv. {level}";
 
-        hpLabel.text = $"HP: {champion.maxHP:0}";
-        adLabel.text = $"AD: {champion.AD:0}";
-        apLabel.text = $"AP: {champion.AP:0}";
-        atkSpeedLabel.text = $"ATK SPD: {champion.attackSpeed:0.00}";
-        critLabel.text = $"CRIT: {champion.critChance * 100f:0}%";
-        defLabel.text = $"DEF: {champion.DEF:0}";
-        mdefLabel.text = $"MDEF: {champion.MDEF:0}";
-        resourceLabel.text = champion.manaPerSecond > 0f ? $"Mana/s: {champion.manaPerSecond:0.0}" : "Resource: none";
+        if (mementoLabel != null)
+            mementoLabel.text = roster != null ? $"{roster.GetMementoCount(champion)}/{roster.mementosToLevelUp}" : "";
+
+        hpLabel.text = $"HP: {stats.maxHP:0}";
+        adLabel.text = $"AD: {stats.AD:0}";
+        apLabel.text = $"AP: {stats.AP:0}";
+        atkSpeedLabel.text = $"ATK SPD: {stats.attackSpeed:0.00}";
+        critLabel.text = $"CRIT: {stats.critChance * 100f:0}%";
+        defLabel.text = $"DEF: {stats.DEF:0}";
+        mdefLabel.text = $"MDEF: {stats.MDEF:0}";
+        resourceLabel.text = stats.manaPerSecond > 0f ? $"Mana/s: {stats.manaPerSecond:0.0}" : "Resource: none";
 
         frontlineAbilityRow.Bind(champion.frontlineAbility, "F");
         backlineAbilityRow.Bind(champion.backlineAbility, "B");

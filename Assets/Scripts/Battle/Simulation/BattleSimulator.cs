@@ -64,7 +64,7 @@ public class BattleSimulator : MonoBehaviour
         {
             if (assignment.character == null) continue;
 
-            BattleUnit unit = new BattleUnit(assignment.character, assignment.position, side, assignment.slotIndex);
+            BattleUnit unit = new BattleUnit(assignment.character, assignment.position, side, assignment.slotIndex, assignment.level);
             bool placed = grid.PlaceUnit(unit, assignment.position, assignment.slotIndex);
 
             if (!placed)
@@ -100,11 +100,11 @@ public class BattleSimulator : MonoBehaviour
             {
                 if (!unit.IsAlive || caster == unit || caster.side != unit.side) return;
 
-                bool ready = unit.data.manaPerSecond <= 0f || unit.currentMana >= 100f;
+                bool ready = unit.EffectiveManaPerSecond <= 0f || unit.currentMana >= 100f;
                 if (!ready) return;
 
                 bool triggered = reactor.OnAllySingleTargetAbility(unit, caster, target, context);
-                if (triggered && unit.data.manaPerSecond > 0f) unit.currentMana = 0f;
+                if (triggered && unit.EffectiveManaPerSecond > 0f) unit.currentMana = 0f;
             };
         }
     }
@@ -156,8 +156,8 @@ public class BattleSimulator : MonoBehaviour
 
             if (unit.isStunned) continue; // stunned units cannot gain mana, fill their attack gauge or act
 
-            unit.AddMana(unit.data.manaPerSecond * deltaTime);
-            unit.attackGauge += unit.data.attackSpeed * deltaTime;
+            unit.AddMana(unit.EffectiveManaPerSecond * deltaTime);
+            unit.attackGauge += unit.EffectiveAttackSpeed * deltaTime;
 
             Ability ability = unit.GetAbility();
 

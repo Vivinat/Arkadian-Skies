@@ -8,6 +8,9 @@ public class CharacterData : ScriptableObject
 
     [Header("Roulette")]
     public ChampionRarity rarity;
+    
+    [Header("Leveling")]
+    public CharacterClass characterClass;
 
     [Header("Base Stats")]
     public float maxHP;

@@ -13,9 +13,9 @@ public class JacoboBacklineOverride : AbilityOverrideSO, IAllyAbilityReactor
     public bool OnAllySingleTargetAbility(BattleUnit self, BattleUnit allyCaster, BattleUnit target, BattleContext context)
     {
         if (!self.IsAlive || !target.IsAlive) return false;
-        if (target.currentHP <= target.data.maxHP * hpThreshold) return false;
+        if (target.currentHP <= target.EffectiveMaxHP * hpThreshold) return false;
 
-        float rawDamage = self.data.AD * damagePercentOfAD;
+        float rawDamage = self.EffectiveAD * damagePercentOfAD;
         CombatResolver.ApplyDamage(self, target, rawDamage, DamageType.AD, context);
 
         if (target.IsAlive)

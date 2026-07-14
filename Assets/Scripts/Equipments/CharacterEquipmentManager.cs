@@ -97,10 +97,15 @@ public class CharacterEquipmentManager : MonoBehaviour
         return true;
     }
 
+    // Full pipeline: base CharacterData -> level-up bonus (via PlayerRoster's level) -> equipment modifiers.
     public CharacterStats GetEffectiveStats(CharacterData champion)
     {
         if (champion == null) return new CharacterStats();
+
         CharacterStats stats = CharacterStats.FromBase(champion);
+        int level = roster != null ? Mathf.Max(roster.GetLevel(champion), 1) : 1;
+        LevelUpCalculator.ApplyLevelBonus(stats, champion, level);
+
         return StatModifierApplier.Apply(stats, SlotsFor(champion));
     }
 

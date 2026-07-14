@@ -96,9 +96,10 @@ public class PartyManager : MonoBehaviour
     }
 
     // Hands the current squad to the static bridge BattleSimulator reads from when the Battle scene loads.
+    // Passing roster along lets each SlotAssignment carry the champion's current level into battle.
     public void SendPartyToBattle()
     {
-        BattleSetup.allyComposition = party.ToComposition();
+        BattleSetup.allyComposition = party.ToComposition(roster);
     }
 
     bool IsValidSlot(ChampionSlotRef slot)

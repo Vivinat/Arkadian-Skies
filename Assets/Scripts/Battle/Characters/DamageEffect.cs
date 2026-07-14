@@ -22,7 +22,7 @@ public class DamageEffect : BaseEffect
 
             float rawDamage;
             if (percentOfTargetMaxHP > 0f)
-                rawDamage = target.data.maxHP * percentOfTargetMaxHP;
+                rawDamage = target.EffectiveMaxHP * percentOfTargetMaxHP;
             else
                 rawDamage = (caster.EffectiveAD * percentOfCasterAD) + (caster.EffectiveAP * percentOfCasterAP) + flatDamage;
 

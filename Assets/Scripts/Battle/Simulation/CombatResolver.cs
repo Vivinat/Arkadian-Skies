@@ -12,11 +12,11 @@ public static class CombatResolver
         if (allowInterception && TryGetInterceptor(target, out IDamageInterceptor interceptor))
         {
             damage = interceptor.OnBeforeDamage(target, attacker, damage, damageType, context, out bool triggered);
-            if (triggered && target.data.manaPerSecond > 0f) target.currentMana = 0f;
+            if (triggered && target.EffectiveManaPerSecond > 0f) target.currentMana = 0f;
         }
 
         target.TakeDamage(damage);
-        Debug.Log($"{BattleLog.LabelOf(attacker)} deals {damage:F1} {damageType} damage to {BattleLog.LabelOf(target)}. {BattleLog.LabelOf(target)} HP: {target.currentHP:F1}/{target.data.maxHP}");
+        Debug.Log($"{BattleLog.LabelOf(attacker)} deals {damage:F1} {damageType} damage to {BattleLog.LabelOf(target)}. {BattleLog.LabelOf(target)} HP: {target.currentHP:F1}/{target.EffectiveMaxHP}");
 
         if (!target.IsAlive)
         {
@@ -51,7 +51,7 @@ public static class CombatResolver
         if (reactive == null || reactive.triggerType != TriggerType.OnDamageTaken) return false;
         if (!(reactive.customExecutor is IDamageInterceptor found)) return false;
 
-        bool ready = target.data.manaPerSecond <= 0f || target.currentMana >= 100f;
+        bool ready = target.EffectiveManaPerSecond <= 0f || target.currentMana >= 100f;
         if (!ready) return false;
 
         interceptor = found;

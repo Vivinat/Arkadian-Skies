@@ -59,11 +59,12 @@ public class PlayerParty : MonoBehaviour
     public bool IsFull => Count() >= MaxPartySize;
 
     // Converts the current squad into the format BattleSetup/BattleSimulator already expect.
-    public List<SlotAssignment> ToComposition()
+    // roster is used to look up each champion's current level - pass null to force everyone to level 1.
+    public List<SlotAssignment> ToComposition(PlayerRoster roster)
     {
         List<SlotAssignment> result = new List<SlotAssignment>();
-        CollectAssignments(result, frontline, BattlePosition.Frontline);
-        CollectAssignments(result, backline, BattlePosition.Backline);
+        CollectAssignments(result, frontline, BattlePosition.Frontline, roster);
+        CollectAssignments(result, backline, BattlePosition.Backline, roster);
         return result;
     }
 
@@ -82,12 +83,14 @@ public class PlayerParty : MonoBehaviour
         return false;
     }
 
-    void CollectAssignments(List<SlotAssignment> result, CharacterData[] array, BattlePosition position)
+    void CollectAssignments(List<SlotAssignment> result, CharacterData[] array, BattlePosition position, PlayerRoster roster)
     {
         for (int i = 0; i < array.Length; i++)
         {
             if (array[i] == null) continue;
-            result.Add(new SlotAssignment { character = array[i], position = position, slotIndex = i });
+
+            int level = roster != null ? Mathf.Max(roster.GetLevel(array[i]), 1) : 1;
+            result.Add(new SlotAssignment { character = array[i], position = position, slotIndex = i, level = level });
         }
     }
 }

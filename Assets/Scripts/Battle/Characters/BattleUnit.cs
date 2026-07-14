@@ -6,6 +6,10 @@ public class BattleUnit
     public BattlePosition position;
     public BattleSide side;
     public int slotIndex;
+    public int level;
+
+    // This unit's stats at its current level, computed once at spawn (level is fixed for the battle's duration).
+    CharacterStats baseStats;
 
     public float currentHP;
     public float currentMana;
@@ -16,8 +20,8 @@ public class BattleUnit
     public float mdefMultiplier = 1f;
     float debuffTimeRemaining = 0f;
 
-    // Permanent per-battle stat bonuses (e.g. Euphrosyne's AP gain on kill). Additive on top of CharacterData,
-    // never written back to the shared asset itself.
+    // Permanent per-battle stat bonuses (e.g. Euphrosyne's AP gain on kill). Additive on top of the
+    // leveled base stats, never written back to the shared asset itself.
     public float bonusAD = 0f;
     public float bonusAP = 0f;
 
@@ -29,18 +33,26 @@ public class BattleUnit
     float healBlockTimeRemaining = 0f;
 
     public bool IsAlive => currentHP > 0f;
-    public float EffectiveDEF => data.DEF * defMultiplier;
-    public float EffectiveMDEF => data.MDEF * mdefMultiplier;
-    public float EffectiveAD => data.AD + bonusAD;
-    public float EffectiveAP => data.AP + bonusAP;
+    public float EffectiveMaxHP => baseStats.maxHP;
+    public float EffectiveDEF => baseStats.DEF * defMultiplier;
+    public float EffectiveMDEF => baseStats.MDEF * mdefMultiplier;
+    public float EffectiveAD => baseStats.AD + bonusAD;
+    public float EffectiveAP => baseStats.AP + bonusAP;
+    public float EffectiveAttackSpeed => baseStats.attackSpeed;
+    public float EffectiveCritChance => baseStats.critChance;
+    public float EffectiveCritDamage => baseStats.critDamage;
+    public float EffectiveManaPerSecond => baseStats.manaPerSecond;
 
-    public BattleUnit(CharacterData data, BattlePosition position, BattleSide side, int slotIndex = 0)
+    public BattleUnit(CharacterData data, BattlePosition position, BattleSide side, int slotIndex = 0, int level = 1)
     {
         this.data = data;
         this.position = position;
         this.side = side;
         this.slotIndex = slotIndex;
-        currentHP = data.maxHP;
+        this.level = Mathf.Max(level, 1);
+        baseStats = LevelUpCalculator.GetStatsAtLevel(data, this.level);
+
+        currentHP = baseStats.maxHP;
         currentMana = 0f;
         attackGauge = 0f;
         autoAttackCount = 0;
@@ -58,7 +70,7 @@ public class BattleUnit
         if (isHealBlocked) return;
 
         amount = Mathf.Max(amount, 0f);
-        currentHP = Mathf.Min(currentHP + amount, data.maxHP);
+        currentHP = Mathf.Min(currentHP + amount, EffectiveMaxHP);
     }
 
     public void AddMana(float amount)
