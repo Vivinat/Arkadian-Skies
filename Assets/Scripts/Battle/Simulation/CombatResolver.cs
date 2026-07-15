@@ -2,11 +2,14 @@ using UnityEngine;
 
 public static class CombatResolver
 {
-    public static void ApplyDamage(BattleUnit attacker, BattleUnit target, float rawDamage, DamageType damageType, BattleContext context, bool allowInterception = true)
+    // defensePenetrationPercent (0-1): ignores that fraction of the target's defense before mitigation,
+    // e.g. Luna's Papillon ignoring 50% of the target's DEF.
+    public static void ApplyDamage(BattleUnit attacker, BattleUnit target, float rawDamage, DamageType damageType, BattleContext context, bool allowInterception = true, float defensePenetrationPercent = 0f)
     {
         if (!target.IsAlive) return;
 
-        float defense = damageType == DamageType.AP ? target.EffectiveMDEF : target.EffectiveDEF;
+        float baseDefense = damageType == DamageType.AP ? target.EffectiveMDEF : target.EffectiveDEF;
+        float defense = baseDefense * (1f - Mathf.Clamp01(defensePenetrationPercent));
         float damage = DamageCalculator.CalculateFinalDamage(rawDamage, defense, damageType);
 
         if (allowInterception && TryGetInterceptor(target, out IDamageInterceptor interceptor))
@@ -17,6 +20,8 @@ public static class CombatResolver
 
         target.TakeDamage(damage);
         Debug.Log($"{BattleLog.LabelOf(attacker)} deals {damage:F1} {damageType} damage to {BattleLog.LabelOf(target)}. {BattleLog.LabelOf(target)} HP: {target.currentHP:F1}/{target.EffectiveMaxHP}");
+
+        context.events.RaiseDamageTaken(target, attacker, damage, damageType);
 
         if (!target.IsAlive)
         {
@@ -51,7 +56,7 @@ public static class CombatResolver
         if (reactive == null || reactive.triggerType != TriggerType.OnDamageTaken) return false;
         if (!(reactive.customExecutor is IDamageInterceptor found)) return false;
 
-        bool ready = target.EffectiveManaPerSecond <= 0f || target.currentMana >= 100f;
+        bool ready = found is IAlwaysReadyInterceptor || target.EffectiveManaPerSecond <= 0f || target.currentMana >= 100f;
         if (!ready) return false;
 
         interceptor = found;

@@ -42,6 +42,8 @@ public class BattleSimulator : MonoBehaviour
         RegisterReactiveAbilities(enemySide);
         RegisterStunReactiveAbilities(allySide);
         RegisterStunReactiveAbilities(enemySide);
+        RegisterDamageTakenReactors(allySide);
+        RegisterDamageTakenReactors(enemySide);
 
         events.OnKill += (killer, victim) =>
         {
@@ -137,6 +139,24 @@ public class BattleSimulator : MonoBehaviour
         }
     }
 
+    // interface-driven only (no TriggerType filter) - lets any champion react to taking damage,
+    // e.g. Luna banking a Butterfly whenever Papillon is hit.
+    void RegisterDamageTakenReactors(BattleGrid grid)
+    {
+        foreach (BattleUnit unit in grid.GetAllUnits())
+        {
+            events.OnDamageTaken += (victim, attacker, damage, damageType) =>
+            {
+                if (!unit.IsAlive || victim != unit) return;
+
+                Ability ability = unit.GetAbility();
+                if (ability == null || !(ability.customExecutor is IDamageTakenReactor reactor)) return;
+
+                reactor.OnDamageTaken(unit, attacker, damage, damageType, context);
+            };
+        }
+    }
+
     IEnumerator BattleLoop()
     {
         float tickInterval = 1f / tickRate;
@@ -165,25 +185,52 @@ public class BattleSimulator : MonoBehaviour
 
             if (unit.isStunned) continue; // stunned units cannot gain mana, fill their attack gauge or act
 
-            unit.AddMana(unit.EffectiveManaPerSecond * deltaTime);
-            unit.attackGauge += unit.EffectiveAttackSpeed * deltaTime;
-
             Ability ability = unit.GetAbility();
+
+            unit.AddMana(unit.EffectiveManaPerSecond * deltaTime);
+            if (ability != null && ability.customExecutor is IPassiveTicker passiveTicker)
+                passiveTicker.TickPassive(unit, deltaTime, context);
+
+            unit.attackGauge += unit.EffectiveAttackSpeed * deltaTime;
 
             if (ability != null && ability.triggerType == TriggerType.Mana && unit.currentMana >= 100f)
             {
                 ability.Execute(unit, context);
                 events.RaiseAbilityUsed(unit);
                 unit.currentMana = 0f;
-                continue;
+                continue; // skip auto-attack this tick if a mana ability fired
             }
 
             if (unit.attackGauge >= 1f)
-            {
-                unit.attackGauge -= 1f;
-                PerformAutoAttack(unit, ability);
-            }
+                ResolveAutoAttack(unit, ability);
         }
+    }
+
+    // Splits off from the plain auto-attack so a champion's ability can swap in a fully custom
+    // basic attack (resource-gated, custom target, custom formula) via IAutoAttackOverride.
+    void ResolveAutoAttack(BattleUnit unit, Ability ability)
+    {
+        if (ability != null && ability.customExecutor is IAutoAttackOverride autoOverride)
+        {
+            if (!autoOverride.CanAutoAttack(unit))
+            {
+                unit.attackGauge = 1f; // hold at the ready threshold until the resource is available
+                return;
+            }
+
+            unit.attackGauge -= 1f;
+
+            BattleUnit target = autoOverride.ResolveAutoAttackTarget(unit, context, GetAutoAttackTarget(unit));
+            if (target == null) return;
+
+            unit.autoAttackCount++;
+            autoOverride.ExecuteAutoAttack(unit, target, context);
+            events.RaiseAutoAttack(unit, target);
+            return;
+        }
+
+        unit.attackGauge -= 1f;
+        PerformAutoAttack(unit, ability);
     }
 
     void PerformAutoAttack(BattleUnit attacker, Ability ability)
@@ -193,6 +240,7 @@ public class BattleSimulator : MonoBehaviour
 
         attacker.autoAttackCount++;
 
+        // EveryNAutoAttacks abilities replace the auto-attack itself on the Nth hit
         if (ability != null && ability.triggerType == TriggerType.EveryNAutoAttacks
             && attacker.autoAttackCount % ability.autoAttackInterval == 0)
         {
@@ -203,6 +251,10 @@ public class BattleSimulator : MonoBehaviour
         }
 
         float rawDamage = 0.25f * attacker.EffectiveAD;
+
+        bool didCrit = CritCalculator.Roll(attacker.EffectiveCritChance);
+        if (didCrit) rawDamage *= CritCalculator.GetMultiplier(attacker.EffectiveCritDamage);
+
         CombatResolver.ApplyDamage(attacker, target, rawDamage, DamageType.AD, context);
         events.RaiseAutoAttack(attacker, target);
     }

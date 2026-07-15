@@ -16,6 +16,11 @@ public class BattleUnit
     public float attackGauge;
     public int autoAttackCount;
 
+    // Generic per-battle scratch slot for a champion's own ability state that doesn't fit the
+    // fields below (e.g. Luna's Black Hole / White Hole tracking, her Butterfly count). Only that
+    // champion's own AbilityOverrideSO should read or write this - nobody else should touch it.
+    public object championState;
+
     public float defMultiplier = 1f;
     public float mdefMultiplier = 1f;
     float debuffTimeRemaining = 0f;
