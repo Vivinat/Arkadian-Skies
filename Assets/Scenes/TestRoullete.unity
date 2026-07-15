@@ -288,7 +288,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d39b6c383fcf75547bd9fa676d7e8fe4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  roster: {fileID: 0}
+  roster: {fileID: 1686958311}
   party: {fileID: 1686958306}
   gold: {fileID: 1686958304}
 --- !u!114 &69508178
@@ -304,7 +304,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   partyManager: {fileID: 69508177}
-  roster: {fileID: 0}
+  roster: {fileID: 1686958311}
   party: {fileID: 1686958306}
   benchPanel: {fileID: 471748042}
   partyPanel: {fileID: 687649615}
@@ -343,7 +343,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b3c53ffc47513d46a604e1a45ae5ea4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  roster: {fileID: 0}
+  roster: {fileID: 1686958311}
   panelRoot: {fileID: 2051693951}
   closeButton: {fileID: 1702219036}
   portraitImage: {fileID: 134734742}
@@ -4723,6 +4723,7 @@ GameObject:
   - component: {fileID: 1686958309}
   - component: {fileID: 1686958308}
   - component: {fileID: 1686958310}
+  - component: {fileID: 1686958311}
   m_Layer: 0
   m_Name: MetaGameManager
   m_TagString: Untagged
@@ -4766,7 +4767,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   championPool: {fileID: 11400000, guid: 7b512705c69925c459746209690e7846, type: 2}
   playerGold: {fileID: 1686958304}
-  playerRoster: {fileID: 0}
+  playerRoster: {fileID: 1686958311}
   resultSlotCount: 5
 --- !u!114 &1686958304
 MonoBehaviour:
@@ -4832,7 +4833,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17fcb9e93f829154083c4b124062f930, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  roster: {fileID: 0}
+  roster: {fileID: 1686958311}
   bank: {fileID: 1686958309}
 --- !u!114 &1686958309
 MonoBehaviour:
@@ -4861,6 +4862,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roulette: {fileID: 1686958302}
   dialogueUI: {fileID: 661542330}
+--- !u!114 &1686958311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1686958300}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79baa577ad2238b4db02174e8913de10, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  benchCapacity: 8
+  mementosToLevelUp: 3
 --- !u!1 &1702219034
 GameObject:
   m_ObjectHideFlags: 0
