@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemName: Medium Armor
   description: "(Armadura M\xE9dia)"
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 5bbc5e9fa473c924baedd52827a09594, type: 3}
   modifiers:
   - statType: 0
     modifierType: 0
