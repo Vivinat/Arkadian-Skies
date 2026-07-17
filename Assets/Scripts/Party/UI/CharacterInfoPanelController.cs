@@ -10,6 +10,7 @@ public class CharacterInfoPanelController : MonoBehaviour
 
     [Header("Refs")]
     public PlayerRoster roster; // optional - if null, level always shows as 1 (e.g. inspecting an enemy/boss)
+    public CharacterEquipmentManager equipmentManager; // optional - if null, the equipment row stays empty
     public GameObject panelRoot;
     public Button closeButton;
 
@@ -32,7 +33,9 @@ public class CharacterInfoPanelController : MonoBehaviour
     [Header("Abilities")]
     public AbilityRowUI frontlineAbilityRow;
     public AbilityRowUI backlineAbilityRow;
-    
+
+    [Header("Equipment (size must match CharacterEquipmentManager.SlotsPerCharacter)")]
+    public EquippedItemSlotUI[] equipmentSlots;
 
     CharacterData currentChampion;
     RectTransform panelRect;
@@ -59,13 +62,14 @@ public class CharacterInfoPanelController : MonoBehaviour
     void OnEnable()
     {
         if (closeButton != null) closeButton.onClick.AddListener(Hide);
+        if (equipmentManager != null) equipmentManager.OnEquipmentChanged += HandleEquipmentChanged;
     }
 
     void OnDisable()
     {
         if (closeButton != null) closeButton.onClick.RemoveListener(Hide);
+        if (equipmentManager != null) equipmentManager.OnEquipmentChanged -= HandleEquipmentChanged;
     }
-
 
     public void Show(CharacterData champion)
     {
@@ -78,7 +82,6 @@ public class CharacterInfoPanelController : MonoBehaviour
         panelRoot.transform.SetAsLastSibling();
     }
 
-
     public void Hide()
     {
         currentChampion = null;
@@ -86,10 +89,19 @@ public class CharacterInfoPanelController : MonoBehaviour
         AbilityTooltip.Instance?.Hide();
     }
 
+    // Keeps the panel live while it's open - e.g. clicking an equipped item's icon to unequip it
+    // should update the icons and stats immediately, without closing and reopening the panel.
+    void HandleEquipmentChanged(CharacterData champion)
+    {
+        if (currentChampion != null && currentChampion == champion) PopulateContent(champion);
+    }
+
     void PopulateContent(CharacterData champion)
     {
         int level = roster != null ? Mathf.Max(roster.GetLevel(champion), 1) : 1;
-        CharacterStats stats = LevelUpCalculator.GetStatsAtLevel(champion, level);
+        CharacterStats stats = equipmentManager != null
+            ? equipmentManager.GetEffectiveStats(champion)
+            : LevelUpCalculator.GetStatsAtLevel(champion, level);
 
         portraitImage.sprite = champion.portrait;
         nameLabel.text = champion.characterName;
@@ -109,5 +121,11 @@ public class CharacterInfoPanelController : MonoBehaviour
 
         frontlineAbilityRow.Bind(champion.frontlineAbility, "F");
         backlineAbilityRow.Bind(champion.backlineAbility, "B");
+
+        if (equipmentManager != null && equipmentSlots != null)
+        {
+            for (int i = 0; i < equipmentSlots.Length; i++)
+                equipmentSlots[i].Bind(equipmentManager, champion, i);
+        }
     }
 }

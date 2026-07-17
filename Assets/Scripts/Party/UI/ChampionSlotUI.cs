@@ -83,7 +83,21 @@ public class ChampionSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     public void OnEndDrag(PointerEventData eventData) => controller.EndDrag(eventData);
 
-    public void OnDrop(PointerEventData eventData) => controller.DropOnSlot(this);
+    // A drop here is either another champion portrait being swapped in (handled by
+    // PartyBenchUIController) or an item icon dragged out of the Item Bank (handled by whichever
+    // ItemSlotUI/ItemBankUIController it came from) - tell them apart by what component the
+    // originally-dragged object carries.
+    public void OnDrop(PointerEventData eventData)
+    {
+        ItemSlotUI droppedItem = eventData.pointerDrag != null ? eventData.pointerDrag.GetComponent<ItemSlotUI>() : null;
+        if (droppedItem != null)
+        {
+            droppedItem.NotifyDroppedOnCharacter(Champion);
+            return;
+        }
+
+        controller.DropOnSlot(this);
+    }
 
     public void OnPointerEnter(PointerEventData eventData) => controller.NotifyHover(this, true);
 

@@ -48,6 +48,26 @@ public class CharacterEquipmentManager : MonoBehaviour
         return true;
     }
 
+    // Convenience for drag-and-drop equipping: the player just drops an item on a portrait
+    // without choosing a slot, so this fills the first empty one instead of requiring an index.
+    public bool EquipToFirstEmptySlot(CharacterData champion, int bankIndex)
+    {
+        if (champion == null)
+        {
+            OnActionFailed?.Invoke("No champion to equip onto.");
+            return false;
+        }
+
+        ItemComponentData[] slots = SlotsFor(champion);
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (slots[i] == null) return Equip(champion, bankIndex, i);
+        }
+
+        OnActionFailed?.Invoke("Champion already has 3 items equipped.");
+        return false;
+    }
+
     // Sends an equipped component back to the bank. Fails if the bank has no room, per REGRAS'
     // "no space in the bank" rule.
     public bool Unequip(CharacterData champion, int slotIndex)

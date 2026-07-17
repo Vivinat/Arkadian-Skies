@@ -9,12 +9,21 @@ public class PlayerItemBank : MonoBehaviour
 {
     public int capacity = 15;
 
+    [Header("Debug (no shop/events yet - use this to seed items for testing)")]
+    public List<ItemComponentData> debugSeedItems = new List<ItemComponentData>();
+    public bool debugFillOnStart = false;
+
     readonly List<ItemComponentData> items = new List<ItemComponentData>();
 
     public event Action OnBankChanged;
 
     public IReadOnlyList<ItemComponentData> Items => items;
     public bool IsFull => items.Count >= capacity;
+
+    void Start()
+    {
+        if (debugFillOnStart) DebugAddSeedItems();
+    }
 
     public ItemComponentData GetAt(int index)
     {
@@ -38,5 +47,14 @@ public class PlayerItemBank : MonoBehaviour
         items.RemoveAt(index);
         OnBankChanged?.Invoke();
         return true;
+    }
+
+    // Right-click the component header in Play Mode (the ⋮ menu also works) to run this anytime -
+    // stand-in for a shop/event grant until those systems exist.
+    [ContextMenu("Debug: Add Seed Items")]
+    void DebugAddSeedItems()
+    {
+        foreach (ItemComponentData item in debugSeedItems)
+            Add(item);
     }
 }
