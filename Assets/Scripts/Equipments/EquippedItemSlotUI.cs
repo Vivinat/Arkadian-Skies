@@ -5,7 +5,7 @@ using UnityEngine.UI;
 // One of the 3 equipment icons shown in the Character Info Panel. Left-click on an occupied
 // slot unequips that item back to the bank - the drag side (equipping) all happens on the
 // ItemSlotUI/ItemBankUIController side instead.
-public class EquippedItemSlotUI : MonoBehaviour, IPointerClickHandler
+public class EquippedItemSlotUI : MonoBehaviour, IPointerClickHandler, IDropHandler
 {
     public Image iconImage;
     public ItemTooltipTrigger tooltipTrigger;
@@ -30,5 +30,19 @@ public class EquippedItemSlotUI : MonoBehaviour, IPointerClickHandler
     {
         if (eventData.button != PointerEventData.InputButton.Left) return;
         manager?.Unequip(champion, slotIndex);
+    }
+
+    // Dropping an item icon from the bank onto this slot equips it - only for champions
+    // the player actually owns (party or bench), never roulette previews
+    public void OnDrop(PointerEventData eventData)
+    {
+        ItemSlotUI droppedItem = eventData.pointerDrag != null ? eventData.pointerDrag.GetComponent<ItemSlotUI>() : null;
+        if (droppedItem == null || !droppedItem.HasItem || manager == null || champion == null) return;
+        if (manager.roster != null && !manager.roster.Owns(champion)) return;
+
+        if (manager.GetEquippedAt(champion, slotIndex) == null)
+            manager.Equip(champion, droppedItem.BankIndex, slotIndex);
+        else
+            manager.EquipToFirstEmptySlot(champion, droppedItem.BankIndex);
     }
 }

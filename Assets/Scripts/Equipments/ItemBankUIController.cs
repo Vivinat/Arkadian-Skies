@@ -131,6 +131,12 @@ public class ItemBankUIController : MonoBehaviour
         equipmentManager.EquipToFirstEmptySlot(champion, sourceSlot.BankIndex);
     }
 
+    // Called by ItemSlotUI.OnDrop when one bank item is released over another slot
+    public void RequestMove(ItemSlotUI source, ItemSlotUI target)
+    {
+        bank.Move(source.BankIndex, target.BankIndex);
+    }
+
     public void EndDrag(PointerEventData eventData)
     {
         if (draggedSlot == null) return;

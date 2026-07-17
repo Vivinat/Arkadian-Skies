@@ -9,6 +9,13 @@ public class AbilityRowUI : MonoBehaviour
     public TMP_Text positionLabel; // "Frontline" / "Backline"
     public Image iconImage;
     public AbilityTooltipTrigger iconTooltipTrigger;
+    public GameObject activeMarker; // optional: shown when this is the ability currently in use
+
+    // Champion sits in this row's battle position, so this is the ability it actually uses
+    public void SetActiveMarker(bool active)
+    {
+        if (activeMarker != null) activeMarker.SetActive(active);
+    }
 
     public void Bind(Ability ability, string positionText)
     {

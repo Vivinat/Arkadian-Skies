@@ -11,6 +11,7 @@ public class CharacterInfoPanelController : MonoBehaviour
     [Header("Refs")]
     public PlayerRoster roster; // optional - if null, level always shows as 1 (e.g. inspecting an enemy/boss)
     public CharacterEquipmentManager equipmentManager; // optional - if null, the equipment row stays empty
+    public PlayerParty party; // optional - if set, the ability matching the champion's party position gets an "active" marker
     public GameObject panelRoot;
     public Button closeButton;
 
@@ -63,12 +64,14 @@ public class CharacterInfoPanelController : MonoBehaviour
     {
         if (closeButton != null) closeButton.onClick.AddListener(Hide);
         if (equipmentManager != null) equipmentManager.OnEquipmentChanged += HandleEquipmentChanged;
+        if (party != null) party.OnChanged += HandlePartyChanged;
     }
 
     void OnDisable()
     {
         if (closeButton != null) closeButton.onClick.RemoveListener(Hide);
         if (equipmentManager != null) equipmentManager.OnEquipmentChanged -= HandleEquipmentChanged;
+        if (party != null) party.OnChanged -= HandlePartyChanged;
     }
 
     public void Show(CharacterData champion)
@@ -96,6 +99,11 @@ public class CharacterInfoPanelController : MonoBehaviour
         if (currentChampion != null && currentChampion == champion) PopulateContent(champion);
     }
 
+    void HandlePartyChanged()
+    {
+        if (currentChampion != null) PopulateContent(currentChampion);
+    }
+
     void PopulateContent(CharacterData champion)
     {
         int level = roster != null ? Mathf.Max(roster.GetLevel(champion), 1) : 1;
@@ -121,6 +129,11 @@ public class CharacterInfoPanelController : MonoBehaviour
 
         frontlineAbilityRow.Bind(champion.frontlineAbility, "F");
         backlineAbilityRow.Bind(champion.backlineAbility, "B");
+
+        BattlePosition activePosition = BattlePosition.Frontline;
+        bool inParty = party != null && party.FindSlot(champion, out activePosition, out _);
+        frontlineAbilityRow.SetActiveMarker(inParty && activePosition == BattlePosition.Frontline);
+        backlineAbilityRow.SetActiveMarker(inParty && activePosition == BattlePosition.Backline);
 
         if (equipmentManager != null && equipmentSlots != null)
         {

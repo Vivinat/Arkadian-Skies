@@ -103,11 +103,35 @@ public class RouletteUIManager : MonoBehaviour
                 slots[i].SetChampion(null);
             }
         }
+
+        RefreshBadges();
     }
 
     void HandleAcquired(int slotIndex, RouletteResult result)
     {
         if (slotIndex < slots.Count) slots[slotIndex].SetClaimed(result.claimed);
+        RefreshBadges();
+    }
+
+    // Copies of an owned champion count as mementos - each slot's badge shows how close
+    // that champion is to the next level up
+    void RefreshBadges()
+    {
+        PlayerRoster roster = roulette.playerRoster;
+        if (roster == null) return;
+
+        foreach (RouletteSlotButton slot in slots)
+        {
+            CharacterData champion = slot.Champion;
+            if (champion == null)
+            {
+                slot.SetOwnership(false, 0, 0, 0);
+                continue;
+            }
+
+            slot.SetOwnership(roster.Owns(champion), roster.GetLevel(champion),
+                roster.GetMementoCount(champion), roster.mementosToLevelUp);
+        }
     }
 
     void RefreshGold(int amount) => goldLabel.text = $"{amount}g";

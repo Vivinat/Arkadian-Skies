@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 // One visual bank slot. Only knows its own bank index and forwards drag events to the
 // controller, the same way ChampionSlotUI forwards everything to PartyBenchUIController.
-public class ItemSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class ItemSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
 {
     public Image iconImage;
     public ItemTooltipTrigger tooltipTrigger;
@@ -55,4 +55,12 @@ public class ItemSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     public void OnDrag(PointerEventData eventData) => controller.UpdateDrag(eventData);
 
     public void OnEndDrag(PointerEventData eventData) => controller.EndDrag(eventData);
+
+    // Another bank item released over this slot reorders the bank
+    public void OnDrop(PointerEventData eventData)
+    {
+        ItemSlotUI dropped = eventData.pointerDrag != null ? eventData.pointerDrag.GetComponent<ItemSlotUI>() : null;
+        if (dropped == null || dropped == this) return;
+        controller.RequestMove(dropped, this);
+    }
 }

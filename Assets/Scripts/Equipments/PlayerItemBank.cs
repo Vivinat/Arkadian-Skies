@@ -39,6 +39,27 @@ public class PlayerItemBank : MonoBehaviour
         return true;
     }
 
+    // Reorders the bank: dropping onto an occupied slot swaps the two items, dropping
+    // onto an empty slot sends the item to the end of the list
+    public bool Move(int fromIndex, int toIndex)
+    {
+        if (fromIndex < 0 || fromIndex >= items.Count || fromIndex == toIndex) return false;
+
+        if (toIndex >= 0 && toIndex < items.Count)
+        {
+            (items[fromIndex], items[toIndex]) = (items[toIndex], items[fromIndex]);
+        }
+        else
+        {
+            ItemComponentData moved = items[fromIndex];
+            items.RemoveAt(fromIndex);
+            items.Add(moved);
+        }
+
+        OnBankChanged?.Invoke();
+        return true;
+    }
+
     public bool RemoveAt(int index, out ItemComponentData removed)
     {
         removed = GetAt(index);

@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -104,3 +105,4 @@ public static class ItemComponentGenerator
         Debug.Log($"Item components generated at {OutputFolder}: {created} created, {updated} updated.");
     }
 }
+#endif
