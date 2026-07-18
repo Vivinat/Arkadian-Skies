@@ -29,14 +29,21 @@ public class ResourceBarView : MonoBehaviour
 
         stackDisplay = ability.customExecutor as IStackResourceDisplay;
         isStackMode = ability.triggerType == TriggerType.EveryNAutoAttacks || stackDisplay != null;
-        fillImage.gameObject.SetActive(!isStackMode);
-        stackContainer.gameObject.SetActive(isStackMode);
-        if (stackCountLabel != null) stackCountLabel.gameObject.SetActive(isStackMode && stackDisplay != null);
 
-        if (isStackMode)
+        // Real stack resources (e.g. Luna's Butterflies) render as a plain "n/max" counter;
+        // pips are only used for modulo counters like Aramor's every-Nth-attack
+        bool counterMode = stackDisplay != null;
+        fillImage.gameObject.SetActive(!isStackMode);
+        stackContainer.gameObject.SetActive(isStackMode && !counterMode);
+        if (stackCountLabel != null) stackCountLabel.gameObject.SetActive(counterMode);
+
+        if (isStackMode && !counterMode)
         {
-            int pipCount = stackDisplay != null ? Mathf.Max(stackDisplay.GetMaxStacks(unit), 1) : Mathf.Max(ability.autoAttackInterval - 1, 1);
-            RebuildPips(pipCount);
+            RebuildPips(Mathf.Max(ability.autoAttackInterval - 1, 1));
+        }
+        else if (pips.Count > 0)
+        {
+            RebuildPips(0); // drop pips left over from a previous stack-mode unit (e.g. after a mid-battle reposition)
         }
 
         // seed the real progress immediately instead of waiting for the next Update() - matters for
@@ -85,12 +92,16 @@ public class ResourceBarView : MonoBehaviour
     {
         if (isStackMode)
         {
-            int filled = stackDisplay != null ? stackDisplay.GetCurrentStacks(unit) : unit.autoAttackCount % Mathf.Max(ability.autoAttackInterval, 1);
+            if (stackDisplay != null)
+            {
+                if (stackCountLabel != null)
+                    stackCountLabel.text = $"{stackDisplay.GetCurrentStacks(unit)}/{stackDisplay.GetMaxStacks(unit)}";
+                return;
+            }
+
+            int filled = unit.autoAttackCount % Mathf.Max(ability.autoAttackInterval, 1);
             for (int i = 0; i < pips.Count; i++)
                 pips[i].SetActive(i < filled);
-
-            if (stackDisplay != null && stackCountLabel != null)
-                stackCountLabel.text = filled.ToString();
         }
         else
         {

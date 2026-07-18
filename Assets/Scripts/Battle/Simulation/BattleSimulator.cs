@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,19 +19,34 @@ public class BattleSimulator : MonoBehaviour
 
     public BattleUIManager uiManager;
     public DialogueUIController dialogueUI;
+    public BattlePauseController pauseController;
+
+    // false lets an intro sequence run first - it calls BeginBattle() when done
+    public bool startOnAwake = true;
+
+    public event Action<bool> OnBattleEnded; // true = ally victory; a draw counts as defeat
 
     BattleGrid allySide;
     BattleGrid enemySide;
     BattleEvents events;
     BattleContext context;
     bool battleOver = false;
+    bool battleStarted = false;
+
+    public BattleEvents Events => events;
+    public bool HasStarted => battleStarted;
+    public bool IsOver => battleOver;
+
+    void Awake()
+    {
+        events = new BattleEvents();
+    }
 
     // Whoever holds this when the enemy team wipes speaks the Victory Quote.
     BattleUnit lastAllyKiller;
 
     void Start()
     {
-        events = new BattleEvents();
         SetupGrids();
         context = new BattleContext(allySide, enemySide, events);
 
@@ -57,6 +73,13 @@ public class BattleSimulator : MonoBehaviour
             if (uiManager != null) uiManager.BindGrids(allySide, enemySide);
         };
 
+        if (startOnAwake) BeginBattle();
+    }
+
+    public void BeginBattle()
+    {
+        if (battleStarted) return;
+        battleStarted = true;
         StartCoroutine(BattleLoop());
     }
 
@@ -115,7 +138,14 @@ public class BattleSimulator : MonoBehaviour
                 if (!ready) return;
 
                 bool triggered = reactor.OnAllySingleTargetAbility(unit, caster, target, context);
-                if (triggered && unit.EffectiveManaPerSecond > 0f) unit.currentMana = 0f;
+                if (triggered)
+                {
+                    if (unit.EffectiveManaPerSecond > 0f) unit.currentMana = 0f;
+
+                    // UI-only label: "With Me!" becomes "With Me, Luna!" - names the combo partner
+                    string comboLabel = $"{ability.abilityName.TrimEnd('!')}, {caster.data.characterName}!";
+                    events.RaiseAbilityUsed(unit, ability, comboLabel);
+                }
             };
         }
     }
@@ -162,6 +192,12 @@ public class BattleSimulator : MonoBehaviour
         float tickInterval = 1f / tickRate;
         while (!battleOver)
         {
+            if (pauseController != null && pauseController.IsPaused)
+            {
+                yield return null;
+                continue;
+            }
+
             Tick(tickInterval);
             yield return new WaitForSeconds(tickInterval);
         }
@@ -193,10 +229,18 @@ public class BattleSimulator : MonoBehaviour
 
             unit.attackGauge += unit.EffectiveAttackSpeed * deltaTime;
 
-            if (ability != null && ability.triggerType == TriggerType.Mana && unit.currentMana >= 100f)
+            // Reactive/self-managed kits (interceptors, custom auto-attacks, ally reactors) treat
+            // full Mana as a readiness gate consumed by their own triggers - the simulator must
+            // not fire their (empty) Execute or steal their mana at 100
+            bool selfManaged = ability != null &&
+                (ability.customExecutor is IDamageInterceptor
+                 || ability.customExecutor is IAutoAttackOverride
+                 || ability.customExecutor is IAllyAbilityReactor);
+
+            if (ability != null && !selfManaged && ability.triggerType == TriggerType.Mana && unit.currentMana >= 100f)
             {
                 ability.Execute(unit, context);
-                events.RaiseAbilityUsed(unit);
+                events.RaiseAbilityUsed(unit, ability);
                 unit.currentMana = 0f;
                 continue; // skip auto-attack this tick if a mana ability fired
             }
@@ -245,7 +289,7 @@ public class BattleSimulator : MonoBehaviour
             && attacker.autoAttackCount % ability.autoAttackInterval == 0)
         {
             ability.Execute(attacker, context, forcedTarget: target);
-            events.RaiseAbilityUsed(attacker);
+            events.RaiseAbilityUsed(attacker, ability);
             events.RaiseAutoAttack(attacker, target);
             return;
         }
@@ -297,6 +341,8 @@ public class BattleSimulator : MonoBehaviour
             {
                 Debug.Log("Battle ended: ENEMY TEAM WINS.");
             }
+
+            OnBattleEnded?.Invoke(!enemyAlive && allyAlive);
         }
     }
 }

@@ -41,6 +41,9 @@ public static class CleanRouletteSceneBuilder
     static Sprite fillSprite;
     static Sprite circleSprite;
     static Sprite gradientSprite;
+    static Sprite radialSprite;
+    static Sprite barFillSprite;
+    static GameObject pipPrefab;
     static TMP_FontAsset font;
 
     // ---------- theme ----------
@@ -65,6 +68,9 @@ public static class CleanRouletteSceneBuilder
 
     [MenuItem("Tools/Arkadian Skies/Build Clean Roulette Scene")]
     public static void BuildClean() => Build(ArcaneTheme(), true);
+
+    [MenuItem("Tools/Arkadian Skies/Build Clean Battle Scene")]
+    public static void BuildBattle() => BuildBattleScene();
 
     // ---------- build ----------
 
@@ -102,6 +108,17 @@ public static class CleanRouletteSceneBuilder
         public TMP_Text tooltipTitle, tooltipDescription;
 
         public DialogueUIController dialogue;
+
+        public Button pauseButton, resumeButton;
+        public TMP_Text pauseLabel;
+        public GameObject pausedBanner;
+        public CanvasGroup bankGroup;
+
+        public TMP_Text clockLabel, announceLabel;
+        public RectTransform focusFrame, popupTemplate;
+        public GameObject resultPanel;
+        public TMP_Text resultTitle, resultSubtitle;
+        public Button retryButton;
     }
 
     static void Build(Theme theme, bool askToSave)
@@ -156,6 +173,561 @@ public static class CleanRouletteSceneBuilder
     static string GenDir => string.IsNullOrEmpty(T.assetSub) ? GeneratedDir : $"{GeneratedDir}/{T.assetSub}";
     static string PrefDir => string.IsNullOrEmpty(T.assetSub) ? PrefabDir : $"{PrefabDir}/{T.assetSub}";
 
+    // ---------- battle scene ----------
+
+    const string BattleSourceScenePath = "Assets/Scenes/SampleScene.unity";
+    const string BattleScenePath = "Assets/Scenes/TestBattleClean.unity";
+
+    static void BuildBattleScene()
+    {
+        if (!File.Exists(BattleSourceScenePath))
+        {
+            Debug.LogError($"Source scene not found at {BattleSourceScenePath}");
+            return;
+        }
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+
+        T = ArcaneTheme();
+        font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(T.fontPath);
+        if (font == null) font = TMP_Settings.defaultFontAsset;
+
+        GenerateSprites();
+
+        if (SceneManager.GetActiveScene().path == BattleScenePath)
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        AssetDatabase.DeleteAsset(BattleScenePath);
+        if (!AssetDatabase.CopyAsset(BattleSourceScenePath, BattleScenePath))
+        {
+            Debug.LogError("Failed to copy battle source scene.");
+            return;
+        }
+
+        Scene scene = EditorSceneManager.OpenScene(BattleScenePath, OpenSceneMode.Single);
+
+        RemoveOldUI();
+        foreach (TurnBarView v in Object.FindObjectsOfType<TurnBarView>(true)) if (v != null) Object.DestroyImmediate(v.gameObject);
+        foreach (HealthBarView v in Object.FindObjectsOfType<HealthBarView>(true)) if (v != null) Object.DestroyImmediate(v.gameObject);
+        foreach (ResourceBarView v in Object.FindObjectsOfType<ResourceBarView>(true)) if (v != null) Object.DestroyImmediate(v.gameObject);
+
+        BattleSimulator sim = Object.FindObjectOfType<BattleSimulator>(true);
+        if (sim == null)
+        {
+            Debug.LogError("No BattleSimulator found in the battle scene.");
+            return;
+        }
+        SeedCompositions(sim);
+
+        GameObject metaGO = new GameObject("BattleMetaManager");
+        PlayerRoster roster = metaGO.AddComponent<PlayerRoster>();
+        PlayerItemBank bankData = metaGO.AddComponent<PlayerItemBank>();
+        bankData.capacity = 8;
+        bankData.debugFillOnStart = true;
+        SeedBankItems(bankData);
+        CharacterEquipmentManager equip = metaGO.AddComponent<CharacterEquipmentManager>();
+        equip.roster = roster;
+        equip.bank = bankData;
+
+        ItemSlotUI itemSlotPrefab = LoadOrBuildItemSlotPrefab();
+        pipPrefab = BuildPipPrefab();
+
+        sim.startOnAwake = false; // BattleIntroUI releases the fight after the enemy intro
+
+        UIRefs ui = BuildBattleUI(sim);
+
+        // Battle-scene controllers live on their own object, wired to the battle-local data
+        GameObject controllers = new GameObject("UIControllers");
+        ItemBankUIController bankUI = controllers.AddComponent<ItemBankUIController>();
+        bankUI.bank = bankData;
+        bankUI.equipmentManager = equip;
+        bankUI.bankPanel = ui.bankPanel;
+        bankUI.bankSlotsParent = ui.bankSlotsParent;
+        bankUI.slotPrefab = itemSlotPrefab;
+        bankUI.openBankButton = ui.openBankButton;
+        bankUI.rootCanvas = ui.canvas;
+        bankUI.dragGhostImage = ui.dragGhost;
+
+        CharacterInfoPanelController info = controllers.AddComponent<CharacterInfoPanelController>();
+        info.roster = roster;
+        info.equipmentManager = equip;
+        info.panelRoot = ui.infoPanelRoot;
+        info.closeButton = ui.infoCloseButton;
+        info.portraitImage = ui.infoPortrait;
+        info.nameLabel = ui.infoName;
+        info.levelLabel = ui.infoLevel;
+        info.mementoLabel = ui.infoMemento;
+        info.hpLabel = ui.hp;
+        info.adLabel = ui.ad;
+        info.apLabel = ui.ap;
+        info.atkSpeedLabel = ui.atkSpd;
+        info.critLabel = ui.crit;
+        info.defLabel = ui.def;
+        info.mdefLabel = ui.mdef;
+        info.resourceLabel = ui.resource;
+        info.frontlineAbilityRow = ui.frontAbilityRow;
+        info.backlineAbilityRow = ui.backAbilityRow;
+        info.equipmentSlots = ui.equipSlots;
+
+        AbilityTooltip tooltip = controllers.AddComponent<AbilityTooltip>();
+        tooltip.panelRoot = ui.tooltipRoot;
+        tooltip.titleLabel = ui.tooltipTitle;
+        tooltip.descriptionLabel = ui.tooltipDescription;
+
+        sim.dialogueUI = ui.dialogue;
+
+        BattlePauseController pauseCtrl = Object.FindObjectOfType<BattlePauseController>(true);
+        if (pauseCtrl == null) pauseCtrl = sim.gameObject.AddComponent<BattlePauseController>();
+        sim.pauseController = pauseCtrl;
+
+        BattlePauseUI pauseUI = ui.canvas.gameObject.AddComponent<BattlePauseUI>();
+        pauseUI.pauseController = pauseCtrl;
+        pauseUI.pauseButton = ui.pauseButton;
+        pauseUI.pauseButtonLabel = ui.pauseLabel;
+        pauseUI.pausedBanner = ui.pausedBanner;
+        pauseUI.resumeButton = ui.resumeButton;
+        pauseUI.itemBankGroup = ui.bankGroup;
+
+        // Per the rules, equips/unequips in battle only happen during a pause
+        foreach (EquippedItemSlotUI equipSlot in ui.equipSlots)
+            equipSlot.pauseGate = pauseCtrl;
+
+        BattleUIManager battleUIManager = Object.FindObjectOfType<BattleUIManager>(true);
+
+        BattleClockUI clock = ui.canvas.gameObject.AddComponent<BattleClockUI>();
+        clock.simulator = sim;
+        clock.pauseController = pauseCtrl;
+        clock.label = ui.clockLabel;
+
+        BattleIntroUI introUI = ui.canvas.gameObject.AddComponent<BattleIntroUI>();
+        introUI.simulator = sim;
+        introUI.battleUI = battleUIManager;
+        introUI.announceLabel = ui.announceLabel;
+        introUI.focusFrame = ui.focusFrame;
+
+        BattleResultUI resultUI = ui.canvas.gameObject.AddComponent<BattleResultUI>();
+        resultUI.simulator = sim;
+        resultUI.panelRoot = ui.resultPanel;
+        resultUI.titleLabel = ui.resultTitle;
+        resultUI.subtitleLabel = ui.resultSubtitle;
+        resultUI.retryButton = ui.retryButton;
+
+        BattleFxUI fx = ui.canvas.gameObject.AddComponent<BattleFxUI>();
+        fx.simulator = sim;
+        fx.battleUI = battleUIManager;
+        fx.abilityPopupTemplate = ui.popupTemplate;
+        fx.castRingSprite = raisedFrameSprite;
+
+        BattleAllyRosterSeeder seeder = metaGO.AddComponent<BattleAllyRosterSeeder>();
+        seeder.simulator = sim;
+        seeder.roster = roster;
+
+        Camera cam = Object.FindObjectOfType<Camera>();
+        if (cam != null)
+        {
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = T.background;
+        }
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        EnsureInBuildSettings(BattleScenePath); // the RETRY button reloads the scene by name
+        Debug.Log($"Clean battle scene built and saved at {BattleScenePath}");
+    }
+
+    static GameObject BuildPipPrefab()
+    {
+        RectTransform root = NewRect("ResourcePipClean", null);
+        root.sizeDelta = new Vector2(12, 12);
+        AddImage(root, T.accent, circleSprite, false);
+        Outline outline = root.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(0f, 0f, 0f, 0.8f);
+        outline.effectDistance = new Vector2(1, -1);
+        return SavePrefab(root.gameObject, $"{PrefDir}/ResourcePipClean.prefab");
+    }
+
+    static void EnsureInBuildSettings(string scenePath)
+    {
+        var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+        if (scenes.Exists(s => s.path == scenePath)) return;
+        scenes.Add(new EditorBuildSettingsScene(scenePath, true));
+        EditorBuildSettings.scenes = scenes.ToArray();
+    }
+
+    // Only seeds when every slot is empty, so a hand-configured composition is never clobbered
+    static void SeedCompositions(BattleSimulator sim)
+    {
+        bool HasAny(System.Collections.Generic.List<SlotAssignment> list)
+        {
+            foreach (SlotAssignment a in list) if (a.character != null) return true;
+            return false;
+        }
+        if (HasAny(sim.allyComposition) || HasAny(sim.enemyComposition)) return;
+
+        string[] guids = AssetDatabase.FindAssets("t:CharacterData");
+        var champions = new System.Collections.Generic.List<CharacterData>();
+        foreach (string guid in guids)
+        {
+            CharacterData data = AssetDatabase.LoadAssetAtPath<CharacterData>(AssetDatabase.GUIDToAssetPath(guid));
+            if (data != null) champions.Add(data);
+        }
+        if (champions.Count == 0)
+        {
+            Debug.LogWarning("No CharacterData assets found - battle compositions left empty.");
+            return;
+        }
+
+        void Fill(System.Collections.Generic.List<SlotAssignment> list, BattlePosition position, int count)
+        {
+            for (int i = 0; i < count; i++)
+                list.Add(new SlotAssignment
+                {
+                    character = champions[Random.Range(0, champions.Count)],
+                    position = position,
+                    slotIndex = i,
+                    level = 1
+                });
+        }
+
+        sim.allyComposition.Clear();
+        sim.enemyComposition.Clear();
+        Fill(sim.allyComposition, BattlePosition.Frontline, sim.allyFrontlineSlots);
+        Fill(sim.allyComposition, BattlePosition.Backline, sim.allyBacklineSlots);
+        Fill(sim.enemyComposition, BattlePosition.Frontline, sim.enemyFrontlineSlots);
+        Fill(sim.enemyComposition, BattlePosition.Backline, sim.enemyBacklineSlots);
+    }
+
+    static void SeedBankItems(PlayerItemBank bankData)
+    {
+        string[] guids = AssetDatabase.FindAssets("t:ItemComponentData");
+        for (int i = 0; i < guids.Length && bankData.debugSeedItems.Count < 4; i++)
+        {
+            ItemComponentData item = AssetDatabase.LoadAssetAtPath<ItemComponentData>(AssetDatabase.GUIDToAssetPath(guids[i]));
+            if (item != null) bankData.debugSeedItems.Add(item);
+        }
+    }
+
+    // Reuses the roulette scene's prefab when it exists so both scenes share one asset
+    static ItemSlotUI LoadOrBuildItemSlotPrefab()
+    {
+        GameObject prefabGO = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefDir}/ItemSlotClean.prefab");
+        ItemSlotUI slot = prefabGO != null ? prefabGO.GetComponent<ItemSlotUI>() : null;
+        return slot != null ? slot : BuildSlotPrefabs().itemSlot;
+    }
+
+    static UIRefs BuildBattleUI(BattleSimulator sim)
+    {
+        UIRefs ui = new UIRefs();
+
+        GameObject canvasGO = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        canvasGO.layer = 5;
+        ui.canvas = canvasGO.GetComponent<Canvas>();
+        ui.canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        CanvasScaler scaler = canvasGO.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+        scaler.matchWidthOrHeight = 0.5f;
+        Transform canvas = canvasGO.transform;
+
+        RectTransform bg = NewRect("Background", canvas);
+        StretchInset(bg, 0);
+        AddImage(bg, Color.white, gradientSprite, false);
+
+        ArenaGlow(canvas, "ArenaGlowCenter", new Vector2(0, -40), new Vector2(1100, 620), T.accent, 0.05f);
+        ArenaGlow(canvas, "ArenaGlowLeft", new Vector2(-575, -40), new Vector2(700, 520), Hex("C06078"), 0.05f);
+        ArenaGlow(canvas, "ArenaGlowRight", new Vector2(575, -40), new Vector2(700, 520), T.framePrimary, 0.05f);
+
+        var (bar, _, _) = Window(canvas, "TopBar");
+        bar.anchorMin = new Vector2(0, 1);
+        bar.anchorMax = new Vector2(1, 1);
+        bar.pivot = new Vector2(0.5f, 1);
+        bar.offsetMin = new Vector2(10, -64);
+        bar.offsetMax = new Vector2(-10, -8);
+        ui.openBankButton = TopBarButton(bar, "ItemsButton", "ITEMS", -20);
+
+        ui.clockLabel = NewText(bar, "ClockLabel", "0:00", 26, T.accentBright, TextAlignmentOptions.MidlineRight, FontStyles.Bold);
+        RectTransform clockRt = (RectTransform)ui.clockLabel.transform;
+        clockRt.anchorMin = new Vector2(1, 0.5f);
+        clockRt.anchorMax = new Vector2(1, 0.5f);
+        clockRt.pivot = new Vector2(1, 0.5f);
+        clockRt.anchoredPosition = new Vector2(-136, 0);
+        clockRt.sizeDelta = new Vector2(130, 40);
+        ui.clockLabel.characterSpacing = 2;
+
+        ui.announceLabel = NewText(bar, "AnnounceLabel", "", 20, T.accentBright, TextAlignmentOptions.Center, FontStyles.Bold);
+        RectTransform announceRt = (RectTransform)ui.announceLabel.transform;
+        StretchInset(announceRt, 0);
+        announceRt.offsetMin = new Vector2(200, 0);
+        announceRt.offsetMax = new Vector2(-290, 0);
+        ui.announceLabel.characterSpacing = 4;
+        ui.announceLabel.enableWordWrapping = false;
+        ui.announceLabel.overflowMode = TextOverflowModes.Overflow;
+
+        ui.pauseButton = NewButton(bar, "PauseButton", "PAUSE (0)", new Vector2(150, 40), 15, T.textPrimary, StandardFrameColors());
+        RectTransform pauseRt = (RectTransform)ui.pauseButton.transform;
+        pauseRt.anchorMin = new Vector2(0, 0.5f);
+        pauseRt.anchorMax = new Vector2(0, 0.5f);
+        pauseRt.pivot = new Vector2(0, 0.5f);
+        pauseRt.anchoredPosition = new Vector2(20, 0);
+        ui.pauseLabel = ui.pauseButton.GetComponentInChildren<TMP_Text>();
+        ui.pauseLabel.characterSpacing = 2;
+
+        var (bank, _, _) = Window(canvas, "BankPanel");
+        SetTopRight(bank, new Vector2(-10, -72), new Vector2(440, 272));
+        ui.bankPanel = bank.gameObject;
+        ui.bankGroup = bank.gameObject.AddComponent<CanvasGroup>();
+        SectionTitle(bank, "ITEMS", -16);
+        ui.bankSlotsParent = SlotGrid(bank, "BankSlots", -58, 92, 10, 4, 398, 194);
+
+        // Enemies on the left, the player's squad on the right; frontlines face each other
+        BattleUIManager battleUI = Object.FindObjectOfType<BattleUIManager>(true);
+        if (battleUI != null)
+        {
+            battleUI.enemyBacklineSlots = BuildSlotColumn(canvas, "EnemyBack", sim.enemyBacklineSlots, -680, true);
+            battleUI.enemyFrontlineSlots = BuildSlotColumn(canvas, "EnemyFront", sim.enemyFrontlineSlots, -470, true);
+            battleUI.allyFrontlineSlots = BuildSlotColumn(canvas, "AllyFront", sim.allyFrontlineSlots, 470, false);
+            battleUI.allyBacklineSlots = BuildSlotColumn(canvas, "AllyBack", sim.allyBacklineSlots, 680, false);
+        }
+
+        BuildPausedBanner(canvas, ui);
+
+        // Intro focus frame - moved and blinked over enemy cards by BattleIntroUI
+        RectTransform focus = NewRect("IntroFocusFrame", canvas);
+        focus.sizeDelta = new Vector2(152, 194);
+        AddImage(focus, T.accentBright, raisedFrameSprite, false);
+        focus.gameObject.SetActive(false);
+        ui.focusFrame = focus;
+
+        // Ability-name popup template, instantiated by BattleFxUI
+        var (popup, _, _) = Box(canvas, "AbilityPopupTemplate", Hex("0B0716"), T.accent, false);
+        popup.sizeDelta = new Vector2(180, 38);
+        TMP_Text popupLabel = NewText(popup, "Label", "Ability", 14, T.textPrimary, TextAlignmentOptions.Center, FontStyles.Bold);
+        StretchInset((RectTransform)popupLabel.transform, 0);
+        popupLabel.enableWordWrapping = false;
+        popupLabel.overflowMode = TextOverflowModes.Overflow;
+        popup.gameObject.SetActive(false);
+        ui.popupTemplate = popup;
+
+        BuildResultPanel(canvas, ui);
+
+        BuildCharacterInfoPanel(canvas, ui);
+        BuildDialogue(canvas, ui);
+        BuildTooltip(canvas, ui);
+
+        RectTransform ghost = NewRect("DragGhost", canvas);
+        ghost.sizeDelta = new Vector2(110, 110);
+        ui.dragGhost = AddImage(ghost, Color.white, null, false);
+        ui.dragGhost.enabled = false;
+
+        return ui;
+    }
+
+    static void BuildPausedBanner(Transform canvas, UIRefs ui)
+    {
+        var (banner, _, _) = Window(canvas, "PausedBanner");
+        banner.anchorMin = new Vector2(0.5f, 1);
+        banner.anchorMax = new Vector2(0.5f, 1);
+        banner.pivot = new Vector2(0.5f, 1);
+        banner.anchoredPosition = new Vector2(0, -84);
+        banner.sizeDelta = new Vector2(560, 180);
+
+        TMP_Text title = NewText(banner, "Title", "PAUSED", 30, T.accent, TextAlignmentOptions.Center, FontStyles.Bold);
+        RectTransform titleRt = (RectTransform)title.transform;
+        titleRt.anchorMin = new Vector2(0, 1);
+        titleRt.anchorMax = new Vector2(1, 1);
+        titleRt.pivot = new Vector2(0.5f, 1);
+        titleRt.anchoredPosition = new Vector2(0, -18);
+        titleRt.sizeDelta = new Vector2(0, 38);
+        title.characterSpacing = 6;
+
+        TMP_Text subtitle = NewText(banner, "Subtitle", "Equip items from the bank while time is stopped", 15, T.textSecondary, TextAlignmentOptions.Center, FontStyles.Normal);
+        RectTransform subRt = (RectTransform)subtitle.transform;
+        subRt.anchorMin = new Vector2(0, 1);
+        subRt.anchorMax = new Vector2(1, 1);
+        subRt.pivot = new Vector2(0.5f, 1);
+        subRt.anchoredPosition = new Vector2(0, -60);
+        subRt.sizeDelta = new Vector2(0, 24);
+
+        ui.resumeButton = NewButton(banner, "ResumeButton", "RESUME", new Vector2(180, 48), 16, T.textPrimary, StandardFrameColors());
+        RectTransform resumeRt = (RectTransform)ui.resumeButton.transform;
+        resumeRt.anchorMin = new Vector2(0.5f, 0);
+        resumeRt.anchorMax = new Vector2(0.5f, 0);
+        resumeRt.pivot = new Vector2(0.5f, 0);
+        resumeRt.anchoredPosition = new Vector2(0, 18);
+
+        banner.gameObject.SetActive(false);
+        ui.pausedBanner = banner.gameObject;
+    }
+
+    static CharacterSlotUI[] BuildSlotColumn(Transform canvas, string prefix, int count, float x, bool enemy)
+    {
+        const float rowSpacing = 235f;
+        CharacterSlotUI[] slots = new CharacterSlotUI[count];
+        for (int i = 0; i < count; i++)
+        {
+            float y = ((count - 1) * 0.5f - i) * rowSpacing - 30f;
+            slots[i] = BuildBattleSlot(canvas, $"{prefix}Slot{i}", new Vector2(x, y), enemy);
+        }
+        return slots;
+    }
+
+    // One unit "card": gradient backplate with a side-tinted beveled frame, portrait,
+    // three bars and a name strip
+    static CharacterSlotUI BuildBattleSlot(Transform canvas, string name, Vector2 pos, bool enemy)
+    {
+        RectTransform root = NewRect(name, canvas);
+        root.anchorMin = new Vector2(0.5f, 0.5f);
+        root.anchorMax = new Vector2(0.5f, 0.5f);
+        root.pivot = new Vector2(0.5f, 0.5f);
+        root.anchoredPosition = pos;
+        root.sizeDelta = new Vector2(130, 172);
+
+        RectTransform cardFill = NewRect("Fill", root);
+        StretchInset(cardFill, 4);
+        AddImage(cardFill, Color.white, fillSprite, false);
+        RectTransform cardFrame = NewRect("Frame", root);
+        StretchInset(cardFrame, 0);
+        AddImage(cardFrame, enemy ? Hex("C06078") : T.framePrimary, raisedFrameSprite, true);
+
+        var (portraitBox, _, _) = Box(root, "PortraitBox", T.slotFill, T.frameSecondary, false);
+        portraitBox.anchorMin = new Vector2(0.5f, 1);
+        portraitBox.anchorMax = new Vector2(0.5f, 1);
+        portraitBox.pivot = new Vector2(0.5f, 1);
+        portraitBox.anchoredPosition = new Vector2(0, -8);
+        portraitBox.sizeDelta = new Vector2(106, 106);
+        RectTransform portrait = NewRect("Portrait", portraitBox); StretchInset(portrait, 7);
+        Image portraitImg = AddImage(portrait, new Color(1, 1, 1, 0), null, false);
+
+        Color hpColor = enemy ? Hex("E85868") : Hex("58E878");
+        Image turnFill = BarVisual(root, "TurnBar", -117, 6, 106, Hex("E8D858"), out RectTransform turnRt);
+        TurnBarView turnBar = turnRt.gameObject.AddComponent<TurnBarView>();
+        turnBar.fillImage = turnFill;
+
+        Image healthFill = BarVisual(root, "HealthBar", -125, 12, 106, hpColor, out RectTransform healthRt);
+        HealthBarView healthBar = healthRt.gameObject.AddComponent<HealthBarView>();
+        healthBar.fillImage = healthFill;
+
+        Image resourceFill = BarVisual(root, "ResourceBar", -139, 10, 106, T.accent, out RectTransform resourceRt);
+        ResourceBarView resourceBar = resourceRt.gameObject.AddComponent<ResourceBarView>();
+        resourceBar.fillImage = resourceFill;
+
+        RectTransform stackContainer = NewRect("StackContainer", resourceRt);
+        StretchInset(stackContainer, 0);
+        HorizontalLayoutGroup stackLayout = stackContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
+        stackLayout.spacing = 3;
+        stackLayout.padding = new RectOffset(2, 2, 0, 0);
+        stackLayout.childAlignment = TextAnchor.MiddleLeft;
+        stackLayout.childControlWidth = false;
+        stackLayout.childControlHeight = false;
+        stackLayout.childForceExpandWidth = false;
+        stackLayout.childForceExpandHeight = false;
+
+        TMP_Text stackLabel = NewText(resourceRt, "StackCount", "", 13, T.textPrimary, TextAlignmentOptions.Center, FontStyles.Bold);
+        RectTransform stackRt = (RectTransform)stackLabel.transform;
+        stackRt.anchorMin = new Vector2(0.5f, 0.5f);
+        stackRt.anchorMax = new Vector2(0.5f, 0.5f);
+        stackRt.pivot = new Vector2(0.5f, 0.5f);
+        stackRt.anchoredPosition = Vector2.zero;
+        stackRt.sizeDelta = new Vector2(106, 20);
+        stackLabel.enableWordWrapping = false;
+        stackLabel.overflowMode = TextOverflowModes.Overflow;
+
+        resourceBar.stackContainer = stackContainer;
+        resourceBar.stackPipPrefab = pipPrefab != null ? pipPrefab : AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/ResourcePip.prefab");
+        resourceBar.stackCountLabel = stackLabel;
+
+        RectTransform nameBand = NewRect("NameBand", root);
+        nameBand.anchorMin = new Vector2(0.5f, 1);
+        nameBand.anchorMax = new Vector2(0.5f, 1);
+        nameBand.pivot = new Vector2(0.5f, 1);
+        nameBand.anchoredPosition = new Vector2(0, -151);
+        nameBand.sizeDelta = new Vector2(106, 16);
+        AddImage(nameBand, new Color(0f, 0f, 0.02f, 0.5f), null, false);
+        TMP_Text nameLabel = NewText(nameBand, "Label", "", 12, T.textPrimary, TextAlignmentOptions.Center, FontStyles.Bold);
+        StretchInset((RectTransform)nameLabel.transform, 0);
+        nameLabel.enableWordWrapping = false;
+        nameLabel.overflowMode = TextOverflowModes.Overflow;
+
+        BattleUnitView view = root.gameObject.AddComponent<BattleUnitView>();
+        view.portraitImage = portraitImg;
+        view.nameLabel = nameLabel;
+
+        return new CharacterSlotUI { turnBar = turnBar, healthBar = healthBar, resourceBar = resourceBar, unitView = view };
+    }
+
+    static Image BarVisual(Transform parent, string name, float y, float height, float width, Color fillColor, out RectTransform barRt)
+    {
+        barRt = NewRect(name, parent);
+        barRt.anchorMin = new Vector2(0.5f, 1);
+        barRt.anchorMax = new Vector2(0.5f, 1);
+        barRt.pivot = new Vector2(0.5f, 1);
+        barRt.anchoredPosition = new Vector2(0, y);
+        barRt.sizeDelta = new Vector2(width, height);
+
+        AddImage(barRt, Hex("050508"), null, false);
+        Outline outline = barRt.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(0f, 0f, 0f, 0.9f);
+        outline.effectDistance = new Vector2(1, -1);
+
+        RectTransform fillRt = NewRect("Fill", barRt);
+        StretchInset(fillRt, 1);
+        Image fill = AddImage(fillRt, fillColor, barFillSprite, false);
+        fill.type = Image.Type.Filled;
+        fill.fillMethod = Image.FillMethod.Horizontal;
+        fill.fillAmount = 1f;
+        return fill;
+    }
+
+    static void ArenaGlow(Transform canvas, string name, Vector2 pos, Vector2 size, Color color, float alpha)
+    {
+        RectTransform glow = NewRect(name, canvas);
+        glow.anchorMin = new Vector2(0.5f, 0.5f);
+        glow.anchorMax = new Vector2(0.5f, 0.5f);
+        glow.pivot = new Vector2(0.5f, 0.5f);
+        glow.anchoredPosition = pos;
+        glow.sizeDelta = size;
+        AddImage(glow, new Color(color.r, color.g, color.b, alpha), radialSprite, false);
+    }
+
+    static void BuildResultPanel(Transform canvas, UIRefs ui)
+    {
+        RectTransform overlay = NewRect("ResultPanel", canvas);
+        StretchInset(overlay, 0);
+        AddImage(overlay, new Color(0f, 0f, 0.01f, 0.78f), null, true);
+
+        var (win, _, _) = Window(overlay, "Window");
+        win.anchorMin = new Vector2(0.5f, 0.5f);
+        win.anchorMax = new Vector2(0.5f, 0.5f);
+        win.pivot = new Vector2(0.5f, 0.5f);
+        win.anchoredPosition = Vector2.zero;
+        win.sizeDelta = new Vector2(620, 320);
+
+        ui.resultTitle = NewText(win, "Title", "VICTORY", 54, T.accent, TextAlignmentOptions.Center, FontStyles.Bold);
+        RectTransform titleRt = (RectTransform)ui.resultTitle.transform;
+        titleRt.anchorMin = new Vector2(0, 1);
+        titleRt.anchorMax = new Vector2(1, 1);
+        titleRt.pivot = new Vector2(0.5f, 1);
+        titleRt.anchoredPosition = new Vector2(0, -42);
+        titleRt.sizeDelta = new Vector2(0, 70);
+        ui.resultTitle.characterSpacing = 8;
+
+        ui.resultSubtitle = NewText(win, "Subtitle", "", 17, T.textSecondary, TextAlignmentOptions.Center, FontStyles.Normal);
+        RectTransform subRt = (RectTransform)ui.resultSubtitle.transform;
+        subRt.anchorMin = new Vector2(0, 1);
+        subRt.anchorMax = new Vector2(1, 1);
+        subRt.pivot = new Vector2(0.5f, 1);
+        subRt.anchoredPosition = new Vector2(0, -128);
+        subRt.sizeDelta = new Vector2(0, 30);
+
+        ui.retryButton = NewButton(win, "RetryButton", "RETRY", new Vector2(200, 54), 17, T.textPrimary, StandardFrameColors());
+        RectTransform retryRt = (RectTransform)ui.retryButton.transform;
+        retryRt.anchorMin = new Vector2(0.5f, 0);
+        retryRt.anchorMax = new Vector2(0.5f, 0);
+        retryRt.pivot = new Vector2(0.5f, 0);
+        retryRt.anchoredPosition = new Vector2(0, 30);
+
+        overlay.gameObject.SetActive(false);
+        ui.resultPanel = overlay.gameObject;
+    }
+
     // ---------- old UI removal ----------
 
     static void RemoveOldUI()
@@ -190,6 +762,23 @@ public static class CleanRouletteSceneBuilder
         fillSprite = MakeSprite($"{GenDir}/window_fill.png", WindowFillTexture(8, 64), Vector4.zero);
         circleSprite = MakeSprite($"{GenDir}/circle.png", CircleTexture(64), Vector4.zero);
         gradientSprite = MakeSprite($"{GenDir}/bg_gradient.png", GradientTexture(4, 256, T.bgTop, T.bgBottom), Vector4.zero);
+        radialSprite = MakeSprite($"{GenDir}/radial_glow.png", RadialGlowTexture(128), Vector4.zero);
+        barFillSprite = MakeSprite($"{GenDir}/bar_fill.png", GradientTexture(4, 16, Color.white, new Color(0.55f, 0.55f, 0.55f)), Vector4.zero);
+    }
+
+    static Texture2D RadialGlowTexture(int size)
+    {
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        float half = size * 0.5f;
+        for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+            float r = new Vector2(x + 0.5f - half, y + 0.5f - half).magnitude / half;
+            float a = Mathf.Clamp01(1f - r);
+            tex.SetPixel(x, y, new Color(1f, 1f, 1f, a * a));
+        }
+        tex.Apply();
+        return tex;
     }
 
     static float RoundRectSdf(float px, float py, float extent, float radius)

@@ -4,8 +4,9 @@ using UnityEngine;
 public class NikkalFrontlineOverride : AbilityOverrideSO
 {
     // Swaps Nikkal with the ally directly behind her in the backline. If that slot is empty,
-    // she simply takes it. Once she's on the backline, BattleUnit.GetAbility() automatically
-    // starts returning her backline ability (Transmogryphy the Pain) - no extra bookkeeping needed.
+    // she simply takes it. Only NIKKAL trades kits: she explicitly switches to her backline
+    // ability, while the moved ally keeps the kit of its original position (a Backline Luna
+    // pushed into the frontline slot keeps using Papillon).
     public override void ExecuteCustom(BattleUnit caster, BattleGrid allySide, BattleGrid enemySide, BattleContext context)
     {
         if (caster.position != BattlePosition.Frontline) return;
@@ -23,6 +24,7 @@ public class NikkalFrontlineOverride : AbilityOverrideSO
         }
 
         grid.PlaceUnit(caster, BattlePosition.Backline, slot);
+        caster.abilityPosition = BattlePosition.Backline;
 
         Debug.Log($"{BattleLog.LabelOf(caster)} uses Elder's Repositioning, permanently moving to the backline.");
         context.events.RaisePositionsChanged();

@@ -4,7 +4,8 @@ public class BattleEvents
 {
     public event Action<BattleUnit, BattleUnit> OnAutoAttack;
     public event Action<BattleUnit, BattleUnit> OnKill;
-    public event Action<BattleUnit> OnAbilityUsed;
+    // caster, the ability that was used, optional display label for the UI (null = use the ability's name)
+    public event Action<BattleUnit, Ability, string> OnAbilityUsed;
     public event Action<BattleUnit, BattleUnit> OnBeforeSingleTargetAbility;
 
     // fired for ANY unit (ally or enemy) that gets stunned; listeners filter by side themselves
@@ -27,9 +28,9 @@ public class BattleEvents
         OnKill?.Invoke(killer, victim);
     }
 
-    public void RaiseAbilityUsed(BattleUnit caster)
+    public void RaiseAbilityUsed(BattleUnit caster, Ability ability, string displayLabel = null)
     {
-        OnAbilityUsed?.Invoke(caster);
+        OnAbilityUsed?.Invoke(caster, ability, displayLabel);
     }
 
     public void RaiseBeforeSingleTargetAbility(BattleUnit caster, BattleUnit target)

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -43,6 +44,10 @@ public class CharacterInfoPanelController : MonoBehaviour
     RectTransform canvasRect;
     Camera uiCamera;
 
+    // Optional per-Show source for which ability row is active (e.g. a live BattleUnit's
+    // abilityPosition). When null, falls back to the champion's PlayerParty position.
+    Func<BattlePosition?> activeAbilityProvider;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -74,11 +79,14 @@ public class CharacterInfoPanelController : MonoBehaviour
         if (party != null) party.OnChanged -= HandlePartyChanged;
     }
 
-    public void Show(CharacterData champion)
+    public void Show(CharacterData champion) => Show(champion, null);
+
+    public void Show(CharacterData champion, Func<BattlePosition?> activeProvider)
     {
         if (champion == null) return;
 
         currentChampion = champion;
+        activeAbilityProvider = activeProvider;
         PopulateContent(champion);
 
         panelRoot.SetActive(true);
@@ -88,8 +96,17 @@ public class CharacterInfoPanelController : MonoBehaviour
     public void Hide()
     {
         currentChampion = null;
+        activeAbilityProvider = null;
         panelRoot.SetActive(false);
         AbilityTooltip.Instance?.Hide();
+    }
+
+    // The active kit can change while the panel is open (e.g. Nikkal repositioning
+    // mid-battle), so provider-driven markers are kept live every frame
+    void Update()
+    {
+        if (currentChampion != null && activeAbilityProvider != null && panelRoot.activeSelf)
+            ApplyActiveMarkers(activeAbilityProvider());
     }
 
     // Keeps the panel live while it's open - e.g. clicking an equipped item's icon to unequip it
@@ -129,16 +146,25 @@ public class CharacterInfoPanelController : MonoBehaviour
 
         frontlineAbilityRow.Bind(champion.frontlineAbility, "F");
         backlineAbilityRow.Bind(champion.backlineAbility, "B");
-
-        BattlePosition activePosition = BattlePosition.Frontline;
-        bool inParty = party != null && party.FindSlot(champion, out activePosition, out _);
-        frontlineAbilityRow.SetActiveMarker(inParty && activePosition == BattlePosition.Frontline);
-        backlineAbilityRow.SetActiveMarker(inParty && activePosition == BattlePosition.Backline);
+        ApplyActiveMarkers(ResolveActivePosition(champion));
 
         if (equipmentManager != null && equipmentSlots != null)
         {
             for (int i = 0; i < equipmentSlots.Length; i++)
                 equipmentSlots[i].Bind(equipmentManager, champion, i);
         }
+    }
+
+    BattlePosition? ResolveActivePosition(CharacterData champion)
+    {
+        if (activeAbilityProvider != null) return activeAbilityProvider();
+        if (party != null && party.FindSlot(champion, out BattlePosition position, out _)) return position;
+        return null;
+    }
+
+    void ApplyActiveMarkers(BattlePosition? active)
+    {
+        frontlineAbilityRow.SetActiveMarker(active == BattlePosition.Frontline);
+        backlineAbilityRow.SetActiveMarker(active == BattlePosition.Backline);
     }
 }

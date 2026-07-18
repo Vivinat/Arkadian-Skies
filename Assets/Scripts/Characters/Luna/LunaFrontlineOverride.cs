@@ -80,11 +80,6 @@ public class LunaFrontlineOverride : AbilityOverrideSO, IDamageInterceptor
 
     static SingularityState GetState(BattleUnit self)
     {
-        if (!(self.championState is SingularityState state))
-        {
-            state = new SingularityState();
-            self.championState = state;
-        }
-        return state;
+        return self.GetChampionState<SingularityState>(typeof(LunaFrontlineOverride));
     }
 }

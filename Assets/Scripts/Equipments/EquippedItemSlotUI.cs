@@ -10,9 +10,14 @@ public class EquippedItemSlotUI : MonoBehaviour, IPointerClickHandler, IDropHand
     public Image iconImage;
     public ItemTooltipTrigger tooltipTrigger;
 
+    // Optional: when set (battle scene), equipping and unequipping only work while paused
+    public BattlePauseController pauseGate;
+
     CharacterEquipmentManager manager;
     CharacterData champion;
     int slotIndex;
+
+    bool EquipLocked => pauseGate != null && !pauseGate.IsPaused;
 
     public void Bind(CharacterEquipmentManager equipmentManager, CharacterData forChampion, int index)
     {
@@ -29,6 +34,7 @@ public class EquippedItemSlotUI : MonoBehaviour, IPointerClickHandler, IDropHand
     public void OnPointerClick(PointerEventData eventData)
     {
         if (eventData.button != PointerEventData.InputButton.Left) return;
+        if (EquipLocked) return;
         manager?.Unequip(champion, slotIndex);
     }
 
@@ -36,6 +42,7 @@ public class EquippedItemSlotUI : MonoBehaviour, IPointerClickHandler, IDropHand
     // the player actually owns (party or bench), never roulette previews
     public void OnDrop(PointerEventData eventData)
     {
+        if (EquipLocked) return;
         ItemSlotUI droppedItem = eventData.pointerDrag != null ? eventData.pointerDrag.GetComponent<ItemSlotUI>() : null;
         if (droppedItem == null || !droppedItem.HasItem || manager == null || champion == null) return;
         if (manager.roster != null && !manager.roster.Owns(champion)) return;

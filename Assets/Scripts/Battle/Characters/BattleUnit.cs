@@ -8,6 +8,11 @@ public class BattleUnit
     public int slotIndex;
     public int level;
 
+    // Which position's kit this unit uses. Locked to the SPAWN position: being moved to
+    // another row mid-battle (e.g. by Nikkal's Elder's Repositioning) does NOT change a
+    // unit's abilities - only an ability that explicitly rewrites this (Nikkal's own) does.
+    public BattlePosition abilityPosition;
+
     // This unit's stats at its current level, computed once at spawn (level is fixed for the battle's duration).
     CharacterStats baseStats;
 
@@ -16,10 +21,19 @@ public class BattleUnit
     public float attackGauge;
     public int autoAttackCount;
 
-    // Generic per-battle scratch slot for a champion's own ability state that doesn't fit the
-    // fields below (e.g. Luna's Black Hole / White Hole tracking, her Butterfly count). Only that
-    // champion's own AbilityOverrideSO should read or write this - nobody else should touch it.
-    public object championState;
+    // Per-battle scratch state for champion abilities, keyed per ability so a champion's
+    // frontline and backline abilities never clobber each other's state when the unit is
+    // repositioned mid-battle (e.g. Nikkal's Elder's Repositioning moving a Luna between rows).
+    readonly System.Collections.Generic.Dictionary<object, object> championStates = new System.Collections.Generic.Dictionary<object, object>();
+
+    public T GetChampionState<T>(object key) where T : class, new()
+    {
+        if (championStates.TryGetValue(key, out object stored) && stored is T typed) return typed;
+
+        T created = new T();
+        championStates[key] = created;
+        return created;
+    }
 
     public float defMultiplier = 1f;
     public float mdefMultiplier = 1f;
@@ -55,6 +69,7 @@ public class BattleUnit
         this.side = side;
         this.slotIndex = slotIndex;
         this.level = Mathf.Max(level, 1);
+        abilityPosition = position;
         baseStats = LevelUpCalculator.GetStatsAtLevel(data, this.level);
 
         currentHP = baseStats.maxHP;
@@ -86,7 +101,7 @@ public class BattleUnit
 
     public Ability GetAbility()
     {
-        return position == BattlePosition.Frontline ? data.frontlineAbility : data.backlineAbility;
+        return abilityPosition == BattlePosition.Frontline ? data.frontlineAbility : data.backlineAbility;
     }
 
     public void ApplyDefMdefDebuff(float multiplier, float duration)

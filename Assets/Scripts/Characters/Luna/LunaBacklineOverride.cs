@@ -118,11 +118,6 @@ public class LunaBacklineOverride : AbilityOverrideSO, IDamageInterceptor, IAlwa
 
     static PapillonState GetState(BattleUnit self)
     {
-        if (!(self.championState is PapillonState state))
-        {
-            state = new PapillonState();
-            self.championState = state;
-        }
-        return state;
+        return self.GetChampionState<PapillonState>(typeof(LunaBacklineOverride));
     }
 }

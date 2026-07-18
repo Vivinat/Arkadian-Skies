@@ -26,4 +26,21 @@ public class BattleUIManager : MonoBehaviour
             slots[i].Bind(unit);
         }
     }
+
+    public BattleUnitView FindView(BattleUnit unit)
+    {
+        BattleUnitView view = FindIn(allyFrontlineSlots, unit);
+        if (view == null) view = FindIn(allyBacklineSlots, unit);
+        if (view == null) view = FindIn(enemyFrontlineSlots, unit);
+        if (view == null) view = FindIn(enemyBacklineSlots, unit);
+        return view;
+    }
+
+    static BattleUnitView FindIn(CharacterSlotUI[] slots, BattleUnit unit)
+    {
+        if (slots == null) return null;
+        foreach (CharacterSlotUI slot in slots)
+            if (slot.unitView != null && slot.unitView.Unit == unit) return slot.unitView;
+        return null;
+    }
 }
