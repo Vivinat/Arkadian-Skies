@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d14047dec45b50d429c69969e347af89, type: 3}
+  m_Name: Delphinium's Mirror Shard
+  m_EditorClassIdentifier: 
+  itemName: Delphinium's Mirror Shard
+  description: For 3 seconds, allies reflect 50% of AD and AP damage taken back to
+    attackers as AP damage.
+  icon: {fileID: -106941433, guid: 2157314d8e1f9fc4eb478a2475889668, type: 3}
+  effectType: 6
+  power: 0.5
+  duration: 3

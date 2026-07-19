@@ -35,7 +35,15 @@ public class EquippedItemSlotUI : MonoBehaviour, IPointerClickHandler, IDropHand
     {
         if (eventData.button != PointerEventData.InputButton.Left) return;
         if (EquipLocked) return;
-        manager?.Unequip(champion, slotIndex);
+        if (manager == null || manager.GetEquippedAt(champion, slotIndex) == null) return;
+
+        if (pauseGate != null && pauseGate.AvailablePauses <= 0)
+        {
+            pauseGate.NotifyChargeDenied("No pause charges left to unequip! 1 action = 1 charge.");
+            return;
+        }
+
+        if (manager.Unequip(champion, slotIndex) && pauseGate != null) pauseGate.TrySpendPause();
     }
 
     // Dropping an item icon from the bank onto this slot equips it - only for champions
@@ -47,9 +55,16 @@ public class EquippedItemSlotUI : MonoBehaviour, IPointerClickHandler, IDropHand
         if (droppedItem == null || !droppedItem.HasItem || manager == null || champion == null) return;
         if (manager.roster != null && !manager.roster.Owns(champion)) return;
 
-        if (manager.GetEquippedAt(champion, slotIndex) == null)
-            manager.Equip(champion, droppedItem.BankIndex, slotIndex);
-        else
-            manager.EquipToFirstEmptySlot(champion, droppedItem.BankIndex);
+        if (pauseGate != null && pauseGate.AvailablePauses <= 0)
+        {
+            pauseGate.NotifyChargeDenied("No pause charges left to equip! 1 action = 1 charge.");
+            return;
+        }
+
+        bool equipped = manager.GetEquippedAt(champion, slotIndex) == null
+            ? manager.Equip(champion, droppedItem.BankIndex, slotIndex)
+            : manager.EquipToFirstEmptySlot(champion, droppedItem.BankIndex);
+
+        if (equipped && pauseGate != null) pauseGate.TrySpendPause();
     }
 }

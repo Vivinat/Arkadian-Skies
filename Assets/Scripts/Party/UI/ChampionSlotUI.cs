@@ -15,6 +15,8 @@ public class ChampionSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 {
     public Image portraitImage;
     public Image highlightImage; // optional: a soft glow/outline sprite, shown while a drag is in progress
+    public GameObject holdBar;   // optional: hold-to-use progress (e.g. Nostalgia)
+    public Image holdFill;
 
     public ChampionSlotRef SlotRef { get; private set; }
     public CharacterData Champion { get; private set; }
@@ -97,6 +99,18 @@ public class ChampionSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         }
 
         controller.DropOnSlot(this);
+    }
+
+    public void SetHoldProgress(float progress)
+    {
+        if (holdBar == null) return;
+        if (!holdBar.activeSelf) holdBar.SetActive(true);
+        holdFill.fillAmount = Mathf.Clamp01(progress);
+    }
+
+    public void HideHoldProgress()
+    {
+        if (holdBar != null && holdBar.activeSelf) holdBar.SetActive(false);
     }
 
     public void OnPointerEnter(PointerEventData eventData) => controller.NotifyHover(this, true);

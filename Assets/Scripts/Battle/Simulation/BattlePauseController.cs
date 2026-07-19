@@ -25,16 +25,28 @@ public class BattlePauseController : MonoBehaviour
         }
     }
 
-    // Called by the UI (e.g. a "Pause" button) when the player wants to equip/unequip items or use a global item
+    // Pausing requires at least one charge but does not consume it - charges are only
+    // spent by actions (equip, unequip, global item use)
     public bool RequestPause()
     {
         if (IsPaused || AvailablePauses <= 0) return false;
 
-        AvailablePauses--;
         IsPaused = true;
         OnPauseStarted?.Invoke();
         return true;
     }
+
+    public bool TrySpendPause()
+    {
+        if (AvailablePauses <= 0) return false;
+
+        AvailablePauses--;
+        return true;
+    }
+
+    // Lets UI pieces (equip slots, item panels) surface a shared "no charges" warning
+    public event Action<string> OnChargeDenied;
+    public void NotifyChargeDenied(string reason) => OnChargeDenied?.Invoke(reason);
 
     public void ResumeBattle()
     {

@@ -19,3 +19,6 @@ MonoBehaviour:
   - statType: 0
     modifierType: 0
     value: 100
+  isCompleteItem: 0
+  recipeComponentA: {fileID: 0}
+  recipeComponentB: {fileID: 0}

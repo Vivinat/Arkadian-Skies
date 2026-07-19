@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff1292ce4f56c26499ddbe8d9b2cd177, type: 3}
+  m_Name: Embrace of Consensus
+  m_EditorClassIdentifier: 
+  itemName: Embrace of Consensus
+  description: 
+  icon: {fileID: 21300000, guid: d59cfc61d87fc744b8682b756da7742f, type: 3}
+  modifiers:
+  - statType: 0
+    modifierType: 0
+    value: 100
+  - statType: 7
+    modifierType: 1
+    value: 20
+  isCompleteItem: 1
+  recipeComponentA: {fileID: 11400000, guid: 80d7d6a7edc15c442b818099439e59d9, type: 2}
+  recipeComponentB: {fileID: 11400000, guid: 9a632083a49701545a7fae6e067805d6, type: 2}

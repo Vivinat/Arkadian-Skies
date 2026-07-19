@@ -8,6 +8,7 @@ using UnityEngine;
 public class PlayerItemBank : MonoBehaviour
 {
     public int capacity = 15;
+    public ItemRecipeBook recipeBook; // optional - enables combining components in the bank
 
     [Header("Debug (no shop/events yet - use this to seed items for testing)")]
     public List<ItemComponentData> debugSeedItems = new List<ItemComponentData>();
@@ -35,6 +36,47 @@ public class PlayerItemBank : MonoBehaviour
         if (item == null || IsFull) return false;
 
         items.Add(item);
+        OnBankChanged?.Invoke();
+        return true;
+    }
+
+    // Forges a complete item when the two dropped components form a known recipe: both
+    // components are consumed and the result lands where the drop happened
+    public bool TryCombine(int fromIndex, int toIndex)
+    {
+        if (recipeBook == null || fromIndex == toIndex) return false;
+
+        ItemComponentData a = GetAt(fromIndex);
+        ItemComponentData b = GetAt(toIndex);
+        ItemComponentData result = recipeBook.FindRecipe(a, b);
+        if (result == null) return false;
+
+        items[toIndex] = result;
+        items.RemoveAt(fromIndex);
+        OnBankChanged?.Invoke();
+        return true;
+    }
+
+    // Disassembler: a complete item at index becomes its two source components. Net +1
+    // item, so it needs one free slot.
+    public bool DisassembleAt(int index)
+    {
+        ItemComponentData item = GetAt(index);
+        if (item == null || !item.isCompleteItem || item.recipeComponentA == null || item.recipeComponentB == null) return false;
+        if (items.Count + 1 > capacity) return false;
+
+        items[index] = item.recipeComponentA;
+        items.Insert(index + 1, item.recipeComponentB);
+        OnBankChanged?.Invoke();
+        return true;
+    }
+
+    // Delirium: swaps the item at index for another (same slot count).
+    public bool ReplaceAt(int index, ItemComponentData newItem)
+    {
+        if (newItem == null || index < 0 || index >= items.Count) return false;
+
+        items[index] = newItem;
         OnBankChanged?.Invoke();
         return true;
     }

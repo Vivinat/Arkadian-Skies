@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff1292ce4f56c26499ddbe8d9b2cd177, type: 3}
+  m_Name: Halfstep
+  m_EditorClassIdentifier: 
+  itemName: Halfstep
+  description: 'Passive: once per battle, on receiving a killing blow, become untargetable
+    for 2 seconds instead of dying.'
+  icon: {fileID: 21300000, guid: 6d56fbe5c59f4734a84242b0aec7d1d0, type: 3}
+  modifiers:
+  - statType: 6
+    modifierType: 0
+    value: 25
+  - statType: 7
+    modifierType: 0
+    value: 25
+  isCompleteItem: 1
+  recipeComponentA: {fileID: 11400000, guid: 151360af1c047974eb3d563959bf9cd3, type: 2}
+  recipeComponentB: {fileID: 11400000, guid: 151360af1c047974eb3d563959bf9cd3, type: 2}

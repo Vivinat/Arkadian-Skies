@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// A component is a raw ingredient (Dagger, Long Sword, Staff...) - pure stat bonuses, no passives.
-// Two of these combine into a complete item later (recipes/passives are a separate system).
+// Equipment data, used both for raw components (Dagger, Long Sword...) and for complete
+// items forged from two components. Complete items carry their recipe plus a passive
+// description; passive EFFECTS are integrated into battle separately, per item.
 [CreateAssetMenu(fileName = "NewItemComponent", menuName = "Autobattler/Items/Item Component")]
 public class ItemComponentData : ScriptableObject
 {
@@ -11,4 +12,17 @@ public class ItemComponentData : ScriptableObject
     public Sprite icon;
 
     public List<StatModifier> modifiers = new List<StatModifier>();
+
+    [Header("Complete item (forged from two components)")]
+    public bool isCompleteItem;
+    public ItemComponentData recipeComponentA;
+    public ItemComponentData recipeComponentB;
+
+    // Unordered recipe match
+    public bool MatchesRecipe(ItemComponentData a, ItemComponentData b)
+    {
+        if (!isCompleteItem || recipeComponentA == null || recipeComponentB == null) return false;
+        return (recipeComponentA == a && recipeComponentB == b)
+            || (recipeComponentA == b && recipeComponentB == a);
+    }
 }

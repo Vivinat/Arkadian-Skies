@@ -24,11 +24,16 @@ public class ItemBankUIController : MonoBehaviour
     public Canvas rootCanvas;
     public Image dragGhostImage;
 
+    [Tooltip("Seconds a dragged component must hover over its recipe partner to forge")]
+    public float combineHoldSeconds = 3f;
+
     readonly List<ItemSlotUI> slots = new List<ItemSlotUI>();
     static readonly List<RaycastResult> raycastResults = new List<RaycastResult>();
 
     ItemSlotUI draggedSlot;
     ChampionSlotUI hoveredChampionSlot;
+    ItemSlotUI combineTarget;
+    float combineTimer;
 
     void Awake()
     {
@@ -95,6 +100,81 @@ public class ItemBankUIController : MonoBehaviour
             ((RectTransform)dragGhostImage.transform).anchoredPosition = localPoint;
 
         UpdateHoveredChampionSlot(eventData);
+        UpdateCombineTarget();
+    }
+
+    // Hold-to-forge: while the dragged component hovers a slot whose item completes a
+    // recipe with it, a progress bar fills under that slot; leaving the slot cancels it
+    void UpdateCombineTarget()
+    {
+        ItemSlotUI hit = null;
+        foreach (RaycastResult result in raycastResults)
+        {
+            ItemSlotUI slot = result.gameObject.GetComponentInParent<ItemSlotUI>();
+            if (slot != null && slot != draggedSlot)
+            {
+                hit = slot;
+                break;
+            }
+        }
+
+        bool valid = hit != null && hit.HasItem && draggedSlot != null && draggedSlot.HasItem
+            && bank.recipeBook != null
+            && bank.recipeBook.FindRecipe(draggedSlot.Item, hit.Item) != null;
+
+        ItemSlotUI newTarget = valid ? hit : null;
+        if (newTarget == combineTarget) return;
+
+        ClearCombineTarget();
+        combineTarget = newTarget;
+        combineTimer = 0f;
+    }
+
+    void ClearCombineTarget()
+    {
+        if (combineTarget != null) combineTarget.HideCombineProgress();
+        combineTarget = null;
+        combineTimer = 0f;
+    }
+
+    // OnDrag only fires while the pointer moves, so the hold timer advances here instead.
+    // Unscaled time keeps the 5s hold consistent across battle speeds.
+    void Update()
+    {
+        if (draggedSlot == null || combineTarget == null) return;
+
+        bool stillValid = draggedSlot.HasItem && combineTarget.Item != null
+            && bank.recipeBook != null
+            && bank.recipeBook.FindRecipe(draggedSlot.Item, combineTarget.Item) != null;
+        if (!stillValid)
+        {
+            ClearCombineTarget();
+            return;
+        }
+
+        combineTimer += Time.unscaledDeltaTime;
+        combineTarget.SetCombineProgress(combineTimer / combineHoldSeconds);
+
+        if (combineTimer >= combineHoldSeconds) CompleteCombine();
+    }
+
+    void CompleteCombine()
+    {
+        ItemSlotUI target = combineTarget;
+        int fromIndex = draggedSlot.BankIndex;
+        ClearCombineTarget();
+
+        // the dragged item is consumed, so the drag visuals end right here - the later
+        // OnEndDrag from the release is a no-op thanks to the draggedSlot null guard
+        if (hoveredChampionSlot != null)
+        {
+            hoveredChampionSlot.SetHighlight(SlotHighlight.None);
+            hoveredChampionSlot = null;
+        }
+        dragGhostImage.enabled = false;
+        draggedSlot = null;
+
+        bank.TryCombine(fromIndex, target.BankIndex);
     }
 
     // Highlights whichever champion portrait the item is currently over, reusing the same
@@ -131,7 +211,8 @@ public class ItemBankUIController : MonoBehaviour
         equipmentManager.EquipToFirstEmptySlot(champion, sourceSlot.BankIndex);
     }
 
-    // Called by ItemSlotUI.OnDrop when one bank item is released over another slot
+    // Called by ItemSlotUI.OnDrop when one bank item is released over another slot.
+    // Dropping only reorders - forging happens by HOLDING over the recipe partner.
     public void RequestMove(ItemSlotUI source, ItemSlotUI target)
     {
         bank.Move(source.BankIndex, target.BankIndex);
@@ -140,6 +221,8 @@ public class ItemBankUIController : MonoBehaviour
     public void EndDrag(PointerEventData eventData)
     {
         if (draggedSlot == null) return;
+
+        ClearCombineTarget();
 
         if (hoveredChampionSlot != null)
         {

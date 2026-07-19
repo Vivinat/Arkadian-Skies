@@ -10,11 +10,11 @@ EditorBuildSettings:
     guid: 2cda990e2423bbf4892e6590ba056729
   - enabled: 0
     path: Assets/Scenes/TestRouletteClean.unity
-    guid: 859a7e432659df54a8808df4d0484160
+    guid: d49f388b7166d3342905126868b36e38
   - enabled: 0
     path: Assets/Scenes/TestRouletteArcane.unity
     guid: bcf46b961f997504db4c1d65f12b4376
   - enabled: 1
     path: Assets/Scenes/TestBattleClean.unity
-    guid: 98b4fb461ff67d143aa34c6eb0c9ffb7
+    guid: 18c0052d447da5c41b5ff413321fa04c
   m_configObjects: {}

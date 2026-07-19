@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff1292ce4f56c26499ddbe8d9b2cd177, type: 3}
+  m_Name: Casus Belli
+  m_EditorClassIdentifier: 
+  itemName: Casus Belli
+  description: 'Passive (aura): the ally directly behind the wearer gains +10% Attack
+    Speed.'
+  icon: {fileID: 21300000, guid: 4dbde43500f04c540a5eabd3a9ba2f32, type: 3}
+  modifiers:
+  - statType: 3
+    modifierType: 1
+    value: 15
+  isCompleteItem: 1
+  recipeComponentA: {fileID: 11400000, guid: ac9809433e2a3a848a7e4bc62f6b934b, type: 2}
+  recipeComponentB: {fileID: 11400000, guid: 2b58688758a6b864c9af41dfcb3edd84, type: 2}

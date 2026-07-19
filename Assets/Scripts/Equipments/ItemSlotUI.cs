@@ -4,10 +4,12 @@ using UnityEngine.UI;
 
 // One visual bank slot. Only knows its own bank index and forwards drag events to the
 // controller, the same way ChampionSlotUI forwards everything to PartyBenchUIController.
-public class ItemSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
+public class ItemSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IPointerClickHandler
 {
     public Image iconImage;
     public ItemTooltipTrigger tooltipTrigger;
+    public GameObject combineBar; // optional: hold-to-combine progress, shown under the slot
+    public Image combineFill;
 
     public int BankIndex { get; private set; }
     public ItemComponentData Item { get; private set; }
@@ -40,6 +42,18 @@ public class ItemSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         iconImage.color = c;
     }
 
+    public void SetCombineProgress(float progress)
+    {
+        if (combineBar == null) return;
+        if (!combineBar.activeSelf) combineBar.SetActive(true);
+        combineFill.fillAmount = Mathf.Clamp01(progress);
+    }
+
+    public void HideCombineProgress()
+    {
+        if (combineBar != null && combineBar.activeSelf) combineBar.SetActive(false);
+    }
+
     // Called by ChampionSlotUI.OnDrop when this slot's icon was the one dragged onto a portrait.
     public void NotifyDroppedOnCharacter(CharacterData champion)
     {
@@ -55,6 +69,15 @@ public class ItemSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     public void OnDrag(PointerEventData eventData) => controller.UpdateDrag(eventData);
 
     public void OnEndDrag(PointerEventData eventData) => controller.EndDrag(eventData);
+
+    // Left click opens the recipe panel for this item; a release that ends a drag is
+    // filtered out via eventData.dragging so reorders don't pop the panel
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button != PointerEventData.InputButton.Left) return;
+        if (eventData.dragging || !HasItem) return;
+        ItemRecipePanelUI.Instance?.Show(Item);
+    }
 
     // Another bank item released over this slot reorders the bank
     public void OnDrop(PointerEventData eventData)

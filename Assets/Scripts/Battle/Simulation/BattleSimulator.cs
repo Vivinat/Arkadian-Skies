@@ -34,6 +34,7 @@ public class BattleSimulator : MonoBehaviour
     bool battleStarted = false;
 
     public BattleEvents Events => events;
+    public BattleContext Context => context;
     public bool HasStarted => battleStarted;
     public bool IsOver => battleOver;
 
